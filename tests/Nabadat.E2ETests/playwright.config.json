@@ -1,0 +1,14 @@
+{
+  "//": "Reference launch settings for the merged Nabadat.E2ETests lane. The MSTest+Microsoft.Playwright.MSTest runner is driven by C# (Infrastructure/<SPA>/E2ETestBase : PageTest), not by this file — it documents the expected run environment for humans and CI. Set baseURL per SPA under test via the E2E_BASE_URL environment variable (portal: http://localhost:5173 ; tenant-app: https://localhost:5173).",
+  "baseURL": "http://localhost:5173",
+  "use": {
+    "headless": true,
+    "ignoreHTTPSErrors": true,
+    "trace": "on",
+    "screenshot": "on"
+  },
+  "expect": {
+    "timeout": 7000
+  },
+  "browsers": ["chromium", "firefox", "webkit"]
+}

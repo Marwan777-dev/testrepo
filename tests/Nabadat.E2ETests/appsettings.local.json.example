@@ -1,0 +1,51 @@
+{
+  "e2e": {
+    "//": "Merged E2E config for the single Nabadat.E2ETests project. Both harnesses (Infrastructure/Portal + Infrastructure/TenantApp) read this same file and the same E2E_* env overrides. Copy to appsettings.local.json (gitignored) and fill the seeded-user secrets. E2E_BASE_URL takes precedence over baseUrl.",
+
+    "//baseUrl": "Running SPA dev server. Multi-tenant dev resolves the tenant from the subdomain, so target the dedicated 'e2e' tenant (tenant_e2e schema) — a bare localhost host 400s with tenant.subdomain_missing. *.localhost resolves to loopback automatically. Vite proxies /api → https://localhost:7286 (the Nabadat.TenantAdmin host).",
+    "baseUrl": "http://e2e.localhost:5173",
+
+    "//tenantDb": "Tenant-database connection used ONLY by the KPI deactivation-confirmation test (Infrastructure/Portal/E2ETenantDb) to seed the one M-16 kpi_bindings row no portal UI can create. Empty → that one test skips with a clear reason.",
+    "tenantDb": "Host=localhost;Port=5433;Database=nabadat_tenant;Username=postgres;Password=admin",
+    "tenantSchema": "tenant_e2e",
+
+    "//active": "An active, MFA-enrolled tenant user (UserManagement AUTH-1 login, AUTH-3 invalid-code). Also reused as p01 below.",
+    "email": "e2e-active@dev.local",
+    "password": "Admin123!",
+    "totpSecret": "DI2ESN5X42JHHVTQQ3AJSUSIWUV42T33",
+
+    "//enrol": "A tenant user that has NOT enrolled an MFA factor (AUTH-2). The test calls POST /api/v1/dev/fixtures/mfa-reset first, so it is re-runnable without a backend restart.",
+    "enrolEmail": "e2e-enroll@dev.local",
+    "enrolPassword": "Admin123!",
+
+    "//reset": "The user a fresh single-use reset token is minted for via POST /api/v1/dev/fixtures/issue-reset-token (AUTH-4).",
+    "resetEmail": "e2e-reset@dev.local",
+
+    "//p01": "P-01 (CX Program Manager) — full KPI authoring authority. Drives the KPI/CXI/Settings create/edit scenarios in the portal lane.",
+    "p01Email": "e2e-active@dev.local",
+    "p01Password": "Admin123!",
+    "p01TotpSecret": "DI2ESN5X42JHHVTQQ3AJSUSIWUV42T33",
+
+    "//p02": "P-02 (CX Analyst, full CX modules) — read-only KPI form assertions (portal) AND the P-01-vs-P-02 authority split for journey versioning (PersonaVersionTests).",
+    "p02Email": "e2e-p02@dev.local",
+    "p02Password": "Admin123!",
+    "p02TotpSecret": "M2VVVL6XK4QHN5BZ7T3JWERA6YGDS2PC",
+
+    "//p03": "P-03 (read-only persona, no module grants). Denied the journey-author sidebar (JOUR-2) and the User Management / Persona Baselines routes (PB-2).",
+    "p03Email": "e2e-p03@dev.local",
+    "p03Password": "Admin123!",
+    "p03TotpSecret": "P3R2QK7XV4ND6MZAJ5TWHE3SUYBC2F4G",
+
+    "//p06": "P-06 (Executive Sponsor) — read access to the KPI catalogue. Fill in if the catalogue read-only scenarios are exercised.",
+    "p06Email": "FILL_ME@dev.local",
+    "p06Password": "FILL_ME",
+    "p06TotpSecret": "FILL_ME_BASE32_TOTP_SECRET",
+
+    "//p07": "P-07 (Tenant IT Administrator) — non-CX persona. Negative permission assertions (CX-domain modules disabled) + the read-only Customer-Journey settings check.",
+    "p07Email": "e2e-p07@dev.local",
+    "p07Password": "Admin123!",
+    "p07TotpSecret": "KRMFA52VG5DTQOJXHE3TQ7BXO5UWK3TF",
+
+    "//admin": "Not used by the tests. DevDataSeeder also creates a personal admin you can log into the SPA with: s.saif@qbs.jo / SaifAdmin#2026, pre-enrolled with TOTP secret DI2ESN5X42JHHVTQQ3AJSUSIWUV42T33."
+  }
+}

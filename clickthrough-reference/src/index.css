@@ -1,0 +1,254 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================
+   Nabdat Design System — Brand Tokens
+   VOC SaaS · Arabic-first · Dark mode ready
+   Palette: Cyan · Mint · Navy
+   ============================================ */
+
+@theme inline {
+    /* Typography — Poppins (body), Sora (headings), IBM Plex (Arabic fallback) */
+    --font-heading: 'Sora', 'Poppins', 'IBM Plex Sans Arabic', sans-serif;
+    --font-sans: 'Poppins', 'IBM Plex Sans Arabic', sans-serif;
+    --font-mono: 'Fira Code', monospace;
+
+    /* ── Nabadat Brand Colors ─────────────────
+       Available as Tailwind utilities:
+       bg-nb-cyan, text-nb-mint, border-nb-navy, etc.
+       RULE: Brand colors for chrome/nav/CTAs only.
+       NEVER use brand colors to signal KPI status. */
+
+    /* Cyan family — Primary brand */
+    --color-nb-cyan: #0D8BBC;
+    --color-nb-cyan-100: #CCF0FB;
+    --color-nb-cyan-200: #98E1F2;
+    --color-nb-cyan-300: #59CCEA;
+    --color-nb-cyan-700: #0087A8;
+    --color-nb-cyan-800: #005F7A;
+    --color-nb-cyan-900: #003A4D;
+
+    /* Mint family — Secondary brand */
+    --color-nb-mint: #13DB9B;
+    --color-nb-mint-100: #CBF5EB;
+    --color-nb-mint-200: #96EDD4;
+    --color-nb-mint-300: #54DE8C;
+    --color-nb-mint-700: #0DA670;
+    --color-nb-mint-800: #07704E;
+    --color-nb-mint-900: #034530;
+
+    /* Navy family — Wordmark, dark surfaces, text */
+    --color-nb-navy: #1E2235;
+    --color-nb-navy-100: #E3EBF4;
+    --color-nb-navy-200: #C4CADD;
+    --color-nb-navy-300: #8B90A5;
+    --color-nb-navy-700: #161B29;
+    --color-nb-navy-800: #0E1018;
+    --color-nb-navy-900: #070B10;
+
+    /* Neutral palette */
+    --color-nb-dark: #0D0F14;
+    --color-nb-dark-2: #1B1C27;
+    --color-nb-dark-3: #2E3044;
+    --color-nb-stone: #7A8196;
+    --color-nb-stone-lt: #B8BFCE;
+    --color-nb-cloud: #EEF1F7;
+
+    /* ── D1–D5 Semantic KPI Colors ────────────
+       RULE: Only for KPI status indicators.
+       NEVER use decoratively or for chart series. */
+    --color-d1: #1A7A3C;
+    --color-d1-light: #D4F4E2;
+    --color-d1-dark: #0D4A24;
+    --color-d2: #2EB85C;
+    --color-d2-light: #C8F5DB;
+    --color-d2-dark: #156632;
+    --color-d3: #E8A020;
+    --color-d3-light: #FFF0CC;
+    --color-d3-dark: #7A5000;
+    --color-d4: #E05C1A;
+    --color-d4-light: #FFE4D0;
+    --color-d4-dark: #7A2800;
+    --color-d5: #C01B2A;
+    --color-d5-light: #FFD6DA;
+    --color-d5-dark: #6B0010;
+
+    /* Named gradient tokens */
+    --color-nb-gradient-start: #1EC99A;
+    --color-nb-gradient-end: #00B4D8;
+
+    /* Semantic shadcn color mappings */
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+
+    /* Border radius scale (designer spec) */
+    --radius-sm: 0.5rem;    /* 8px */
+    --radius-md: 0.75rem;   /* 12px */
+    --radius-lg: 1.25rem;   /* 20px */
+    --radius-xl: 2rem;      /* 32px */
+    --radius-2xl: 2.5rem;
+    --radius-3xl: 3rem;
+    --radius-4xl: 3.5rem;
+}
+
+/* ============================================
+   Light Theme (default)
+   Clean whites, cyan CTAs, navy text
+   ============================================ */
+:root {
+    color-scheme: light;
+
+    --background: #F7F9FC;
+    --foreground: #1E2235;
+
+    --card: #ffffff;
+    --card-foreground: #1E2235;
+    --popover: #ffffff;
+    --popover-foreground: #1E2235;
+
+    /* Primary = Nabadat Cyan (CTAs, active nav, headline KPIs) */
+    --primary: #0D8BBC;
+    --primary-foreground: #ffffff;
+
+    /* Secondary = Nabadat Mint (accents, secondary CTAs) */
+    --secondary: #13DB9B;
+    --secondary-foreground: #ffffff;
+
+    --muted: #EEF1F7;
+    --muted-foreground: #7A8196;
+
+    /* Accent = Cloud (subtle backgrounds) */
+    --accent: #EEF1F7;
+    --accent-foreground: #1E2235;
+
+    --destructive: #C01B2A;
+    --border: #C4CADD;
+    --input: #C4CADD;
+    --ring: #0D8BBC;
+
+    /* Chart colors — brand palette only, NEVER semantic */
+    --chart-1: #0D8BBC;
+    --chart-2: #13DB9B;
+    --chart-3: #8B90A5;
+    --chart-4: #0087A8;
+    --chart-5: #0DA670;
+
+    --radius: 0.75rem;
+
+    /* Sidebar = Navy (dark, professional) */
+    --sidebar: #1E2235;
+    --sidebar-foreground: #ffffff;
+    --sidebar-primary: #0D8BBC;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #161B29;
+    --sidebar-accent-foreground: #CCF0FB;
+    --sidebar-border: rgba(255, 255, 255, 0.1);
+    --sidebar-ring: #0D8BBC;
+}
+
+/* ============================================
+   Dark Theme — Navy-tinted
+   Deep navy-black base, NOT generic grey.
+   Keeps brand identity strong in dark mode.
+   ============================================ */
+.dark {
+    color-scheme: dark;
+
+    /* Base surfaces — navy-tinted blacks, never pure #000 */
+    --background: #0D0F14;
+    --foreground: #EDEDEF;
+
+    /* Card = elevated surface, slightly lighter */
+    --card: #1B1C27;
+    --card-foreground: #EDEDEF;
+    --popover: #1B1C27;
+    --popover-foreground: #EDEDEF;
+
+    /* Primary brightened for dark bg readability */
+    --primary: #59CCEA;
+    --primary-foreground: #1E2235;
+
+    /* Secondary mint lightened for dark bg */
+    --secondary: #54DE8C;
+    --secondary-foreground: #1E2235;
+
+    /* Muted uses navy-tinted dark surface */
+    --muted: #0E1018;
+    --muted-foreground: #B8BFCE;
+
+    /* Accent = deeper navy */
+    --accent: #161B29;
+    --accent-foreground: #EEF1F7;
+
+    --destructive: #FFD6DA;
+
+    /* Borders — subtle navy tint */
+    --border: rgba(30, 34, 53, 0.5);
+    --input: rgba(30, 34, 53, 0.6);
+    --ring: #59CCEA;
+
+    /* Charts — lightened variants for dark background contrast */
+    --chart-1: #59CCEA;
+    --chart-2: #54DE8C;
+    --chart-3: #B8BFCE;
+    --chart-4: #98E1F2;
+    --chart-5: #96EDD4;
+
+    /* Sidebar — even deeper navy in dark mode */
+    --sidebar: #070B10;
+    --sidebar-foreground: #EDEDEF;
+    --sidebar-primary: #59CCEA;
+    --sidebar-primary-foreground: #1E2235;
+    --sidebar-accent: #161B29;
+    --sidebar-accent-foreground: #CCF0FB;
+    --sidebar-border: rgba(30, 34, 53, 0.4);
+    --sidebar-ring: #59CCEA;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

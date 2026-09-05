@@ -1,0 +1,8 @@
+# Placeholder (T012) so this folder exists in version control before any config files land.
+#
+# The per-entity IEntityTypeConfiguration<T> files (SurveyConfiguration.cs, SectionConfiguration.cs,
+# QuestionConfiguration.cs, ThemeConfiguration.cs, ValueConverters.cs, …) are added here in the
+# US1+ phases (T058+). Each sets explicit HasColumnName mappings onto the raw-SQL baseline
+# (_Baseline.sql, T008) and is registered in TenantDbContext.OnModelCreating.
+#
+# Intentionally carries no formatting rules (no `root = true`) — it only reserves the directory.

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Nabadat.IntegrationHub.UnitTests</RootNamespace>
+    <AssemblyName>Nabadat.IntegrationHub.UnitTests</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <!-- Pins copied verbatim from Nabadat.SurveyBuilder.UnitTests (itself mirroring M-10/M-06),
+       per CLAUDE.md Unit Test Policy rule 14: xUnit v3, FluentAssertions 6.12.x (last MIT
+       release — v7+ needs a paid licence), NSubstitute 5.x, FakeTimeProvider 9.x for the
+       TimeProvider-injected request-log/audit timestamps (DB-08 rule 7). -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="xunit.v3" Version="1.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.*" />
+    <PackageReference Include="FluentAssertions" Version="6.12.*" />
+    <PackageReference Include="NSubstitute" Version="5.*" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="9.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Nabadat.IntegrationHub\Nabadat.IntegrationHub.csproj" />
+  </ItemGroup>
+
+</Project>

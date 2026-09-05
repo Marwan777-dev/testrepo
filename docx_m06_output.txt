@@ -1,0 +1,739 @@
+NABADAT VOC PLATFORM
+Software Requirements Specification
+CX Metrics &amp; KPI Engine (M-06) + Platform Settings
+
+Field
+Value
+Version
+1.2 (Draft)
+Status
+Draft — UI-aligned to prototype screens
+Author
+CX R&amp;D
+Date
+2026-06-14
+Modules
+M-06 CX Metrics &amp; KPI Engine; Platform Settings
+Document Scope
+KPI Management + KPI Configuration + Settings page
+
+Part 1 — Module 06: CX Metrics &amp; KPI Engine
+1. Introduction
+1.1 Purpose &amp; Audience
+This document specifies the KPI Management and KPI Configuration surfaces of the CX Metrics &amp; KPI Engine module (M-06), and the Platform Settings page (Part 2), for the Nabadat VOC platform. It is the single source of truth for engineering, QA, design, and product teams building these pages.
+Audience: Backend engineers, frontend engineers, QA engineers, UX designers, product managers, CX consultants.
+This document assumes no prior CX domain knowledge. Every CX/VOC term is defined on first use and consolidated in the Glossary (Section 10).
+Scope note: M-06 is responsible for KPI definition and score computation. This document covers the KPI definition surfaces only — the screens where a CX Program Manager creates, configures, activates, and manages the catalogue of KPIs. The computation engine and the consumption of these definitions by M-16 journey scoring are referenced but specified elsewhere.
+1.2 Scope
+In scope (this document):
+The KPI Management page — the catalogue list of all KPIs (standard + custom)
+The KPI Configuration page — the create/edit surface for a single KPI
+KPI attribute definitions: short name, full name, perspectives, calculation method, scale, representation style, thresholds, target, activation, dashboard visibility
+Live preview behaviour (question preview + KPI visualization gauge)
+The CXI composite KPI special configuration variant
+Standard vs custom KPI editability rules
+Validation rules and error messaging
+Permissions for KPI management
+Localization (Arabic + English, RTL)
+Platform Settings page (Part 2): Organization section + Customer Journey scoring configuration
+
+Out of scope (this document):
+Score computation execution at scale (the engine that processes responses into scores)
+Multi-level aggregation (touchpoint/stage/journey) — owned by M-16 Strategic Scoring Model
+KPI weight assignment per touchpoint — configured in M-16, not here
+Survey question authoring and binding of questions to KPIs — handled in M-01
+Dashboard rendering of KPI scores — handled in M-07
+Metric trend computation and threshold/target alerting — handled by M-07 and M-09 respectively
+1.3 Definitions &amp; Acronyms
+Term
+Definition
+KPI
+Key Performance Indicator. A configurable CX metric (NPS, CSAT, CES, etc.). M-06 owns its definition and computation.
+Standard KPI
+A platform-provided KPI pre-loaded at tenant provisioning. Cannot be deleted; has constrained editability.
+Custom KPI
+A tenant-created KPI. Fully configurable except short name after creation.
+NPS
+Net Promoter Score. Loyalty metric, raw range −100 to +100. Promoters (9–10) − Detractors (0–6).
+CSAT
+Customer Satisfaction Score. Post-interaction rating.
+CES
+Customer Effort Score. Ease-of-interaction metric; lower effort = better.
+CXI
+Customer Experience Index. A composite KPI derived from a weighted combination of other active KPIs.
+FCR
+First Contact Resolution.
+VFM
+Value for Money. Measures customer satisfaction with the price paid relative to the value gained post-transaction. User-configured scale and calculation method.
+CHS
+Customer Happiness Score. Measures customer happiness post-transaction (common in the sports and entertainment sector). User-configured scale and calculation method.
+Agent Score
+Measures customer satisfaction with the frontliner's behaviour post-transaction — typically across professionalism, attitude, and appearance perspectives. Survey-derived. User-configured scale and calculation method.
+Calculation Method
+The algorithm used to derive the KPI score: Weighted Average, TOP n Box, NPS Standard, or Weighted Composite (CXI).
+Scale
+The raw response range of the KPI (e.g., 1–5, 0–10).
+Representation Style
+How the scale is presented to respondents: Number, Stars, Emoji, or Slider.
+Threshold
+The three satisfaction bands (Unsatisfactory / Average / Satisfactory) applied to the normalised score.
+Target
+The goal value the tenant aims to achieve for this KPI.
+Normalised Score
+A raw KPI value mapped to a 0–100 index (NPS excepted — it displays raw −100 to +100).
+Tenant
+A client organisation using Nabadat; all KPI data is isolated per tenant.
+1.4 References
+Nabadat Platform Definition (DOC-01)
+M-16 — Customer Journey Mapping SRS (consumes KPI definitions; owns per-touchpoint KPI weights and the Strategic Scoring Model)
+M-01 — Survey and Form Builder SRS (binds survey questions to KPIs)
+M-07 — Dashboards &amp; Reporting SRS (renders KPI scores; consumes Show-on-Dashboard flag)
+M-09 — Notifications &amp; Alerts Engine SRS (fires target/threshold alerts)
+M-10 — User &amp; Role Management SRS (RBAC primitives)
+M-11 — Tenant Administration SRS (tenant isolation, audit log)
+Nabadat Brand &amp; Design System
+WCAG 2.1 Level AA — accessibility standard
+
+2. Overall Description
+2.1 Product Perspective
+M-06 is a Phase 1 core module. The KPI definitions configured here are foundational inputs consumed by M-16 (journey scoring), M-01 (survey question binding), and M-07 (dashboard display).
+Module interactions:
+M-16 Customer Journey Mapping (consumer): Reads active KPI definitions, scales, normalisation rules, and calculation methods. Binds KPIs to touchpoints with per-touchpoint weights (owned by M-16). The KPI list surfaced in M-16's touchpoint KPI picker is the set of active KPIs defined here.
+M-01 Survey and Form Builder (consumer): Binds survey questions to KPIs. Uses the KPI scale and representation style to render questions consistently with the preview shown here.
+M-07 Dashboards &amp; Reporting (consumer): Renders KPI scores using each KPI's threshold bands and visualization form. Consumes the Show-on-Main-Dashboard flag to decide which KPIs appear as summary cards.
+M-09 Notifications &amp; Alerts (consumer): Uses target and threshold definitions to fire alerts when scores cross bands or miss targets.
+M-10 User &amp; Role Management (foundational): Provides the RBAC primitives gating who may manage KPIs.
+M-11 Tenant Administration (foundational): Provides tenant isolation and the audit log infrastructure for KPI configuration changes.
+This module owns the entities: KPIDefinition, KPIThreshold, KPIPerspective, and the composite-specific CXIWeight.
+2.2 Operating Environment
+Responsive: desktop primary; the two-panel config layout collapses to stacked (form above preview) on narrow viewports.
+Navigation: KPI Management appears under the PLATFORM section of the left navigation.
+2.3 Assumptions &amp; Dependencies
+A1: M-10 is operational; the CX Program Manager (P-01) role is the primary actor for KPI management.
+A2: M-11 is operational; tenant provisioning seeds the eight standard KPIs and the audit log is available.
+A3: The normalisation formulas (Section 9) are applied by the M-06 computation engine, consistent with M-16 Section 3.3.4.
+A4: Eight standard KPIs are seeded at provisioning (NPS, CSAT, CES, CXI, FCR, VFM, Agent Score, CHS). CHS, VFM, and Agent Score are fully user-configurable like any other KPI; Agent Score is survey-derived. See Section 3.1.4.
+
+3. System Features
+3.1 F1 — KPI Management Page
+3.1.1 Description &amp; Priority
+The central catalogue of all KPIs available to the tenant — both standard and custom. The entry point to all KPI configuration and the only place where new KPIs are created. Priority: Must-have.
+NOTE  UI reference: Image 1 shows the KPI Management page at route /kpi-management: page title with live &quot;8 Active KPIs&quot; subtitle, a Type filter dropdown, an &quot;Active only&quot; checkbox, a search box, an &quot;+ Add KPI&quot; primary button, and the KPI table.
+3.1.2 Functional Requirements
+FR-1.1: The page header displays a live count subtitle: &quot;[X] Active KPIs&quot;. The count reflects only KPIs with status = Active and updates immediately on any activation/deactivation without a page refresh.
+FR-1.2: A Type filter dropdown with options: All (default), Standard, Custom. Filters the table by KPI type.
+FR-1.3: An &quot;Active only&quot; checkbox (checked by default). When checked, only Active KPIs are listed. When unchecked, all KPIs appear, with inactive rows visually dimmed.
+FR-1.4: A Search box filtering the list in real time by Short Name or Full Name (case-insensitive substring match).
+FR-1.5: A &quot;+ Add KPI&quot; primary button opening the KPI Configuration page in create mode (empty form, type = Custom, title &quot;New KPI&quot;).
+FR-1.6: The KPI table displays columns: Short Name, Full Name, Type, Scale, Calc. Method, Target, Dashboard, Status.
+FR-1.7: The Short Name cell is rendered as a clickable link (teal). Clicking any row navigates to the KPI Configuration page for that KPI in edit mode.
+FR-1.8: The Type column renders a pill badge: &quot;Standard&quot; (filled teal-tint) or &quot;Custom&quot; (outlined).
+FR-1.9: The Scale column shows the configured raw scale (e.g., 1–5, 0–10). Composite KPIs (CXI) show &quot;—&quot;.
+FR-1.10: The Calc. Method column shows the human-readable method: &quot;NPS Standard&quot;, &quot;Weighted Average&quot;, or &quot;Weighted Composite&quot;.
+FR-1.11: The Dashboard column renders a checked box icon when Show-on-Main-Dashboard is enabled, or &quot;—&quot; when not.
+FR-1.12: The Status column renders a coloured dot + label: green &quot;Active&quot; or grey &quot;Inactive&quot;.
+FR-1.13: Standard KPIs are listed first in a fixed canonical order (NPS, CSAT, CES, CXI, FCR, VFM, Agent Score, CHS), followed by custom KPIs sorted by creation date descending.
+FR-1.14: No KPI may be deleted. No delete control exists on any row, and no delete endpoint is exposed. KPIs are removed from active use only by deactivation.
+3.1.3 Business Rules
+BR-1.1: The eight standard KPIs are always present regardless of status and cannot be removed from the catalogue.
+BR-1.2: Short Name uniqueness is enforced per tenant (case-insensitive, trimmed) across both standard and custom KPIs.
+BR-1.3: The &quot;Active KPIs&quot; count in the header counts every KPI with status = Active, including CXI.
+
+Standard KPI catalogue (seeded at provisioning):
+Short Name
+Full Name
+Notes
+NPS
+Net Promoter Score
+Special method (NPS Standard). Scale locked 0–10. Bands on raw −100..+100.
+CSAT
+Customer Satisfaction Score
+—
+CES
+Customer Effort Score
+Inverted scale (lower effort = better).-Satisfaction with the efforts to get the service
+CXI
+Customer Experience Index
+Composite. No direct scale. Weighted Composite method. Special config — Section 3.4.
+FCR
+First Contact Resolution
+—
+VFM
+Value for Money
+Satisfaction with price paid vs value gained. User-configured scale &amp; method.
+Agent Score
+Agent Score
+Satisfaction with frontliner behaviour (professionalism, attitude, appearance). Survey-derived. User-configured scale &amp; method.
+CHS
+Customer Happiness Score
+Post-transaction happiness (common in sports/entertainment). User-configured scale &amp; method.
+3.1.4 Standard KPI Definitions &amp; Sample Questions
+CHS, VFM, and Agent Score are fully tenant-configurable like any other KPI — the user chooses the scale, representation style, calculation method, thresholds, and target. The definitions below clarify their intended meaning and provide canonical sample survey questions used as the default Question Preview prompt (confirmed EN strings; AR equivalents provided by localization).
+KPI
+What it measures
+Sample question (Question Preview prompt)
+CHS
+Customer happiness post-transaction. Commonly used by the sports and entertainment sector. Scale and calculation method are user-configured.
+&quot;How happy are you with the activities during the event?&quot;
+VFM
+Customer satisfaction with the price paid relative to the value gained post-transaction. Scale and calculation method are user-configured.
+&quot;Considering the value gained by our product, how satisfied are you with the price you paid?&quot;
+Agent Score
+Customer satisfaction with the frontliner's behaviour post-transaction. Professionalism, attitude, and appearance are the perspectives typically used. Survey-derived. Scale and calculation method are user-configured.
+&quot;Considering your call with our call center today, how satisfied are you with the agent's attitude?&quot;
+NOTE  Agent Score is survey-derived — it is computed from survey responses, not ingested from an external CRM or workforce-management system. No external ingestion endpoint is required for it in v1.
+NOTE  The perspectives listed for Agent Score (professionalism, attitude, appearance) are the typical drill-down dimensions a CX manager would add via the Perspectives field (Section 3.2.3, Field 3); they are entered by the user and are not pre-populated by the system. Each is independently scored from its own bound survey question(s) — see FR-2.14, FR-2.14a, FR-2.14b.
+
+3.2 F2 — KPI Configuration Page (Create / Edit)
+3.2.1 Description &amp; Priority
+The create/edit surface for a single KPI. A two-panel layout: configuration form on the left, live preview on the right. Opened via &quot;+ Add KPI&quot; (create mode, titled &quot;New KPI&quot;) or by clicking a KPI row (edit mode, titled &quot;KPI Configuration&quot; with the full name as subtitle). Priority: Must-have.
+NOTE  UI reference: Image 2 shows create mode (&quot;New KPI&quot;) with an Emoji representation revealing an &quot;Emoji Set&quot; dropdown and a 1–7 emoji question preview; the gauge defaults to 50 with a &quot;KPI&quot; label and Save disabled. Image 3 shows edit mode for NPS: Short Name, Calculation Method, and Scale are read-only; thresholds run −100 to +100; the gauge shows +42 with an &quot;NPS&quot; label and Save enabled.
+3.2.2 Layout Requirements
+FR-2.1: The page is split into two panels: left = configuration form (≈55% width), right = live preview (≈45% width).
+FR-2.2: The right preview panel contains two stacked cards: Question Preview (top) and Dashboard Preview (bottom). The Dashboard Preview shows how the KPI's score card will render in M-07.
+FR-2.3: Both preview cards update live as the user edits any relevant field — no save required.
+FR-2.4: On viewports narrower than the tablet breakpoint, the panels stack vertically with the form above the preview.
+FR-2.5: A back arrow in the page header returns to the KPI Management list, applying the unsaved-changes guard by viewing a confirmation message asking to save or discard changes (FR-2.46).
+3.2.3 Functional Requirements — Configuration Form Fields
+Field 1 — Short Name
+FR-2.6: Text input, max 20 characters, required, placeholder &quot;e.g. QUAL&quot;.
+FR-2.7: Must be unique per tenant (case-insensitive, trimmed); validated on blur with inline error: &quot;This short name is already in use.&quot;
+FR-2.8: Immutable after first save. In edit mode it renders as a read-only, visually greyed field with an info icon; tooltip: &quot;Short name cannot be changed after creation.&quot;
+FR-2.9: Updates the KPI label inside the visualization gauge in real time (create mode).
+Field 2 — Full Name
+FR-2.10: Text input, max 100 characters, required.
+FR-2.11: Updates the Question Preview question label in real time.
+Field 3 — Perspectives
+FR-2.12: Tag/chip input; the user types a label and presses Enter or comma to add it. Helper text: &quot;Press Enter or comma to add. Max 10.&quot;
+FR-2.13: Each chip is removable (× icon). Max 10 perspectives; max 60 characters each. Each perspective is a drill-down dimension of the KPI (e.g., for Agent Score: Attitude, Knowledge, Willingness to Help).
+FR-2.14: Perspectives are independent drill-down dimensions, not a decomposition of the headline score. The overall KPI score is computed solely from the KPI's own question(s); it is NOT an arithmetic roll-up (average or weighted sum) of perspective scores.
+FR-2.14a: Each perspective is independently scored from its own survey question(s) bound to that perspective in M-01, using the KPI's scale and calculation method. M-06 computes and stores a score per perspective alongside the KPI's own overall score.
+FR-2.14b: In M-07 reporting, the user can view the KPI both at the overall level (regardless of perspective) and broken down by each perspective. Perspectives are optional; a KPI with no perspectives simply has no drill-down slices.
+Field 4 — Calculation Method
+FR-2.15: Dropdown, required. Options: Weighted Average, TOP n Box, NPS Standard.
+FR-2.16: Selecting TOP n Box reveals an integer n value input. n must be a positive integer strictly less than the maximum value of the chosen scale (e.g., for a 1–7 scale, n may be 1–6; for a 0–10 scale, n may be 1–9). Definition: the percentage of respondents selecting one of the top n scale values. Values of n equal to or above the scale maximum are rejected with inline error: &quot;n must be less than the maximum scale value.&quot;
+FR-2.17: A non-blocking warning appears when n &gt; ½ × (number of distinct scale values − 1). Here &quot;number of scale values&quot; means the count of distinct selectable points on the scale (e.g., 7 for a 1–7 scale, 11 for a 0–10 scale) — not the three threshold bands. Warning text: &quot;Using a high n value may overstate satisfaction. Consider a stricter threshold.&quot; The user may proceed.
+FR-2.18: NPS Standard is selectable/visible only for the NPS KPI; hidden for all others. For NPS it is read-only and shown with helper text below: &quot;Score = % Promoters (9–10) − % Detractors (0–6)&quot;.
+FR-2.19: For standard KPIs whose method is fixed (NPS), the field renders read-only. Custom KPIs may select any method except NPS Standard.
+Field 5 — Scale
+FR-2.20: Dropdown, required. Options: 0–10, 1–3, 1–5, 1–7, 1–10, 1–100.
+FR-2.21: For NPS, locked to 0–10 and rendered read-only with label &quot;0–10 (locked for NPS)&quot;.
+FR-2.22: Changing the scale updates the Question Preview immediately (the response control re-renders for the new range and current representation style).
+FR-2.23: Changing the scale on a KPI already bound to active touchpoints in M-16 triggers a blocking confirmation: &quot;Changing the scale will affect [N] active touchpoints and their historical normalisation. This is a structural change. Continue?&quot;
+Field 5a — Scale Endpoint Descriptions (Minimum / Maximum Scale Description)
+FR-2.23a: Two optional free-text fields — Minimum Scale Description and Maximum Scale Description — let the user label the low and high ends of the scale (e.g., NPS: &quot;Definitely Would Not Recommend&quot; / &quot;Definitely Would Recommend&quot;). Max 60 characters each. Both are bilingual (EN + AR).
+FR-2.23b: These descriptions render as the left/right anchor labels beneath the scale in the Question Preview (see FR-3.15) and accompany the question wherever it is rendered by M-01. They are display labels only and do not affect scoring.
+Field 6 — Representation Style
+FR-2.24: Dropdown, required. Options: Number, Stars, Emoji, Slider.
+FR-2.25: Selecting Emoji reveals a secondary Emoji Set dropdown. The confirmed v1 catalogue is: FaceClassic (graduated faces 😞 → 😍), and at least one additional set (e.g., a hand/thumbs set 👎 ✋ 👍). Each set maps one emoji per scale value; the chosen set renders in the Question Preview.
+FR-2.26: Slider is selectable only when scale = 1–3. If the scale changes away from 1–3 while Slider is active, the style resets to Number with tooltip: &quot;Slider is only available for 1–3 scales.&quot;
+FR-2.27: The emoji preview renders one emoji per scale value (e.g., 7 faces for a 1–7 scale).
+FR-2.28: Changing the representation style (and emoji set) updates the Question Preview immediately.
+Field 7 — Threshold Configuration
+FR-2.29: Three labelled rows defining contiguous satisfaction bands: Unsatisfactory (lower ≤ score ≤ x), Average (x &lt; score ≤ y), Satisfactory (y &lt; score ≤ upper).
+FR-2.30: x and y are editable integer inputs. The lower bound (0, or −100 for NPS) and upper bound (100, or +100 for NPS) are fixed, non-editable display values.
+FR-2.31: Defaults on create: x = 20, y = 70.
+FR-2.32: Validation: lower &lt; x &lt; y &lt; upper. Inline error on violation: &quot;Threshold values must be ascending and within range.&quot;
+FR-2.33: Band labels are colour-coded: Unsatisfactory red, Average amber, Satisfactory green.
+FR-2.34: Editing x or y repositions the gauge colour-band boundaries in real time.
+Field 8 — Target
+FR-2.35: Integer input. Required for active KPIs.
+FR-2.36: Range 0–100 for all KPIs except NPS; range −100 to +100 for NPS. Out-of-range is a blocking inline error: &quot;Target must be between [min] and [max].&quot;
+FR-2.37: Non-blocking warning if the target is below the Satisfactory band (&lt; y): &quot;This target is not within the Satisfactory range.&quot;
+FR-2.38: The target renders as a coloured marker (▼) on the gauge in real time.
+Field 9 — Active
+FR-2.39: Checkbox, default checked on create. Unchecking excludes the KPI from future scoring, M-16 bindings, survey distributions, and M-07 reporting; historical data is preserved.
+FR-2.40: If the KPI is bound to active touchpoints, unchecking triggers a blocking confirmation: &quot;This KPI is bound to [N] active touchpoints across [M] journeys. Deactivating excludes it from future scoring. Existing data is preserved. Continue?&quot;
+FR-2.41: Deactivating auto-unchecks and disables Show-on-Main-Dashboard, and removes the KPI from any CXI weight table (recomputing CXI proportions).
+Field 10 — Show on Main Dashboard
+FR-2.42: Checkbox, default unchecked. Enabled only when Active is checked.
+FR-2.43: When checked, the KPI appears as a summary card on the M-07 main dashboard. When unchecked, it remains available in M-07 drill-downs but not as a summary card.
+3.2.4 Functional Requirements — Form Actions
+FR-2.44: Save validates all fields; on success, persists and returns to the KPI Management list; on failure, shows inline errors without navigating.
+FR-2.45: Save is disabled until all required fields are valid: Short Name, Full Name, Calculation Method, Scale, Threshold x, Threshold y (Target required additionally when Active). The disabled state is visually distinct.
+FR-2.46: Cancel discards changes and returns to the list, guarded by an unsaved-changes confirmation when changes exist: &quot;You have unsaved changes. Are you sure you want to leave?&quot;
+FR-2.47: Every create/edit/activate/deactivate is written to the M-11 audit log with actor, timestamp, field, previous value, and new value.
+3.2.5 Business Rules
+BR-2.1: Immutable-after-create fields: Short Name (all KPIs). Immutable-for-standard fields: Scale and Calculation Method for NPS.
+BR-2.2: Thresholds and target apply to the normalised 0–100 score for all KPIs except NPS, where they apply to the raw −100 to +100 score.
+BR-2.3: A weight of 0 (in TOP n Box n, or CXI weights) is treated as not configured.
+
+3.3 F3 — Live Preview
+3.3.1 Description &amp; Priority
+Two live preview cards on the right panel give the user immediate feedback on how the KPI will appear to respondents and on dashboards. Priority: Must-have.
+3.3.2 Functional Requirements — Question Preview
+FR-3.1: Displays a placeholder question label appropriate to the KPI; defaults to &quot;Rate your experience with ….&quot; and updates to a KPI-specific prompt where known (e.g., NPS: &quot;How likely are you to recommend us to a friend or colleague?&quot;).
+FR-3.2: Renders the scale in the selected representation style: Number (numbered chips), Stars, Emoji (one emoji per scale value from the selected set), or Slider (1–3 only).
+FR-3.3: Re-renders immediately on any change to Full Name, Scale, Representation Style, or Emoji Set.
+3.3.3 Functional Requirements — Dashboard Preview
+FR-3.4: A universal semicircular arc gauge (horseshoe), used for every KPI type — not NPS-specific.
+FR-3.5: Continuous red → amber → green gradient across the arc; band boundaries are driven by threshold x and y and shift live.
+FR-3.6: A large central numeral shows the preview score (the Target value; defaults to the arc midpoint — 50 — when empty).
+FR-3.7: The KPI Short Name renders beneath the numeral inside the arc (generic &quot;KPI&quot; in create mode before a short name is entered; &quot;NPS&quot; in edit mode).
+FR-3.8: A directional marker (▼) sits on the arc at the target position, coloured by its band.
+FR-3.9: Arc range and labels by type: all KPIs except NPS = 0–100 (labels 0/25/50/75/100); NPS = −100 to +100 (labels −100/−50/0/+50/+100); CXI = 0–100.
+FR-3.10: Live update triggers: Short Name (label), threshold x/y (band boundaries), Target (marker + numeral), Scale (range set), Calculation Method (internal label).
+FR-3.11: When required threshold fields are empty, the gauge renders with defaults (x=20, y=70) and shows: &quot;Using default thresholds — configure fields to update.&quot;
+FR-3.12: The gauge is read-only (preview only) and always visible from page load.
+FR-3.13: The Dashboard Preview reproduces the M-07 score card and includes, in addition to the gauge: the KPI short name and full name above the gauge; the gauge score with its Target marker and a &quot;Target: [value]&quot; caption; a period-over-period delta with direction (e.g., &quot;vs Last Quarter +4 points&quot;); and a total response count (e.g., &quot;responses 3,420&quot;). These use illustrative sample values in the preview.
+FR-3.14: For NPS specifically, the Dashboard Preview also shows the Promoters / Passives / Detractors breakdown as three coloured segments with percentages (e.g., 51% Promoters, 40% Passives, 9% Detractors), reflecting the NPS Standard calculation.
+FR-3.15: Question Preview scale anchors: the Minimum Scale Description and Maximum Scale Description values (see Field 5a) render as left/right anchor labels beneath the scale in the Question Preview (e.g., &quot;Definitely Would Not Recommend&quot; … &quot;Definitely Would Recommend&quot;). They update live as the user edits those fields.
+
+3.4 F4 — CXI Composite KPI Configuration
+3.4.1 Description &amp; Priority
+CXI (Customer Experience Index) is a composite KPI derived from a weighted combination of other active KPIs. It uses the same two-panel layout but replaces scale/representation/method fields with a KPI weights table. Priority: Must-have (CXI is a seeded standard KPI).
+3.4.2 Functional Requirements
+FR-4.1: CXI's Calculation Method is fixed and read-only: &quot;Weighted Composite&quot;. Scale and Representation Style fields are removed.
+FR-4.2: A KPI Weights table lists only currently active KPIs (excluding CXI itself), each with a positive-integer weight input and a live &quot;Effective %&quot; column.
+FR-4.3: Weights are relative positive integers; the engine normalises them to proportions at computation time (no sum-to-100 constraint). Minimum 1 per included KPI; 0 = not included.
+FR-4.4: &quot;Effective %&quot; and a total row update live as weights change.
+FR-4.5: CXI cannot be activated unless at least 2 active KPIs have non-zero weights; otherwise the Active checkbox is disabled with tooltip: &quot;CXI requires at least 2 active KPIs with assigned weights.&quot;
+FR-4.6: If an included KPI is deactivated elsewhere, it is auto-removed from the table and proportions recompute.
+FR-4.7: Threshold, Target, Active, and Show-on-Dashboard fields behave as for standard KPIs. The gauge renders 0–100; the Question Preview card is hidden (CXI is computed, not surveyed). A proportional weight legend renders beneath the gauge.
+FR-4.8: When CXI is shown on the M-07 main dashboard, it displays the composite score together with a member breakdown — each contributing KPI's score and its effective weight (%). M-06 must expose the member breakdown alongside the composite value in the CXI ScoreSnapshot so M-07 can render both.
+3.4.3 Business Rules
+BR-4.1: CXI always produces a normalised 0–100 score regardless of constituent KPI scales.
+BR-4.2: CXI cannot include itself as a constituent.
+3.5 F5 — Permissions &amp; RBAC
+3.5.1 Permission Matrix
+Action
+P-01 CX PM
+P-02 Analyst
+P-06 Exec
+View KPI Management list
+✓
+✓
+✓
+View KPI configuration page
+✓
+✓ (read-only)
+—
+Create custom KPI
+✓
+—
+—
+Edit KPI configuration
+✓
+—
+—
+Activate / deactivate KPI
+✓
+—
+—
+Configure CXI weights
+✓
+—
+—
+Toggle Show on Dashboard
+✓
+—
+—
+
+FR-5.1: Permissions are enforced at both UI (controls hidden/disabled) and API (403 on unauthorised) levels.
+FR-5.2: All KPI changes are attributed to the acting user in the audit log.
+FR-5.3: P-02 Analyst may open the KPI Configuration page in read-only mode: all fields are visible but non-editable, and the Save and activation controls are hidden.
+3.6 F6 — Localization (Arabic + English, RTL)
+FR-6.1: Full Name and Perspectives are user-entered free text; the UI does not auto-translate. Standard KPI short names remain canonical English by convention.
+FR-6.2: All UI labels, helper texts, validation messages, and confirmations have both EN and AR versions.
+FR-6.3: In Arabic, the entire layout — including the two-panel arrangement, the gauge, and the threshold rows — renders RTL.
+FR-6.4: The emoji and number scales render in the correct directional order under RTL.
+
+4. Data Model
+4.1 Entity Relationship Overview
+Tenant
+  └─ KPIDefinition (8 standard seeded + N custom per tenant)
+       ├─ KPIThreshold  (1 per KPI: x, y bounds)
+       ├─ KPIPerspective (0..10 per KPI)
+       └─ CXIWeight (0..N — only for the CXI KPI; one row per included active KPI)
+
+Standard audit fields (id, tenant_id, created_at, created_by, updated_at, updated_by) are present on all entities.
+4.2 Entity Specifications
+4.2.1 KPIDefinition
+Field
+Type
+Nullable
+Notes
+short_name
+varchar(10)
+No
+Unique per tenant (ci, trimmed). Immutable after create.
+full_name
+varchar(100)
+No
+—
+kpi_type
+enum
+No
+Standard, Custom
+is_composite
+boolean
+No
+True only for CXI
+calculation_method
+enum
+No
+WeightedAverage, TopNBox, NPSStandard, WeightedComposite
+top_n_value
+smallint
+Yes
+Required when method = TopNBox
+scale
+enum
+Yes
+0–10, 1–3, 1–5, 1–7, 1–10, 1–100. Null for composite.
+representation_style
+enum
+Yes
+Number, Stars, Emoji, Slider. Null for composite.
+emoji_set
+varchar(40)
+Yes
+Required when representation_style = Emoji
+target
+numeric(5,1)
+Yes
+Required when is_active. Range per type.
+is_active
+boolean
+No
+Default true
+show_on_dashboard
+boolean
+No
+Default false; forced false when inactive
+4.2.2 KPIThreshold
+Field
+Type
+Nullable
+Notes
+kpi_id
+uuid (FK)
+No
+One per KPI
+x
+numeric(5,1)
+No
+Upper bound of Unsatisfactory
+y
+numeric(5,1)
+No
+Upper bound of Average
+lower_bound
+numeric(5,1)
+No
+0 normally; −100 for NPS
+upper_bound
+numeric(5,1)
+No
+100 normally; +100 for NPS
+Constraint: lower_bound &lt; x &lt; y &lt; upper_bound.
+4.2.3 KPIPerspective
+Field
+Type
+Nullable
+Notes
+kpi_id
+uuid (FK)
+No
+—
+label
+varchar(60)
+No
+Perspective name (e.g., Attitude, Knowledge, Willingness to Help). Max 10 rows per KPI.
+id
+uuid (PK)
+No
+Stable perspective identifier. Referenced by M-01 question bindings and M-06 per-perspective score records.
+display_order
+smallint
+No
+Order shown in the config UI and in the M-07 drill-down.
+Note: Per-perspective scores are computed and stored by M-06 alongside the KPI's overall score (one score per perspective per reporting period). The overall KPI score is computed from the KPI's own question(s) and is never an arithmetic roll-up of perspective scores (see FR-2.14).
+4.2.4 CXIWeight
+Field
+Type
+Nullable
+Notes
+cxi_kpi_id
+uuid (FK)
+No
+The CXI KPI
+member_kpi_id
+uuid (FK)
+No
+An included active KPI; unique with cxi_kpi_id
+weight
+smallint
+No
+Positive integer; engine normalises
+
+5. External Interface Requirements
+5.1 API Endpoints
+GET /api/kpis — list (supports ?type=, ?active_only=, ?search=)
+POST /api/kpis — create custom KPI
+GET /api/kpis/{id} — read full configuration
+PUT /api/kpis/{id} — update configuration
+PATCH /api/kpis/{id}/activation — activate/deactivate
+GET /api/kpis/{id}/binding-usage — returns N touchpoints / M journeys for confirmation dialogs
+PUT /api/kpis/{cxi_id}/weights — update CXI weight table
+No delete endpoint exists for KPIs. Error envelope follows the platform standard with code, message_en, message_ar, details.
+5.2 Consumed by Sibling Modules
+M-16 reads active KPI definitions for the touchpoint KPI picker and applies normalisation/method during scoring.
+M-01 reads scale + representation style for question rendering.
+M-07 reads thresholds, target, visualization form, and the Show-on-Dashboard flag.
+M-09 reads thresholds and target for alerting.
+6. Non-Functional Requirements
+NFR-1: KPI list and configuration pages load within 1.5s on standard tenant data volumes.
+NFR-2: Live preview updates render within 100ms of a field change (perceived as instant).
+NFR-3: All configuration changes are audit-logged (M-11) and tenant-isolated.
+NFR-4: WCAG 2.1 AA: gauge colour bands must carry a non-colour cue (label/marker) for colour-blind users.
+NFR-5: Full RTL parity between Arabic and English.
+NFR-6: Save operations are atomic — KPIDefinition, KPIThreshold, KPIPerspective, and CXIWeight persist in a single transaction.
+7. Dependency &amp; Side-Effect Analysis
+Dimension
+Finding
+M-16
+Consumes active KPI list and definitions. Deactivating a KPI bound to active touchpoints requires the confirmation flow (FR-2.40) and affects future scoring only — never historical snapshots.
+M-01
+Scale/representation changes alter how bound survey questions render; scale change on a bound KPI is a structural change (FR-2.23).
+M-07
+Show-on-Dashboard and thresholds drive dashboard cards and band colouring.
+M-09
+Threshold/target changes change alert behaviour on the next evaluation cycle.
+Data integrity
+Immutable Short Name preserves referential integrity across M-16 bindings and historical score records.
+8. Out of Scope
+Score computation execution and aggregation (engine internals; M-16 owns multi-level aggregation)
+Per-touchpoint KPI weights (M-16)
+KPI deletion (permanently unsupported)
+AI-suggested KPI configuration (future)
+Bulk import/export of KPI definitions (future)
+Per-language renaming of the three threshold band labels (future)
+9. KPI Normalisation Reference
+Applied by the M-06 computation engine; consistent with M-16 Section 3.3.4. Maps each raw scale to a 0–100 index (NPS excepted — displays raw −100 to +100).
+KPI / Scale
+Raw
+Normalisation
+NPS
+−100..+100
+Displayed raw; bands applied to raw value
+scale 1–5
+1–5
+((raw − 1) / 4) × 100
+scale 1–7
+1–7
+((raw − 1) / 6) × 100
+CES (1–7, inverted)
+1–7
+((7 − raw) / 6) × 100
+scale 1–10
+1–10
+((raw − 1) / 9) × 100
+scale 1–100
+1–100
+((raw − 1) / 99) × 100
+scale 1–3
+1–3
+((raw − 1) / 2) × 100
+FCR (binary)
+0/1
+raw × 100
+CXI
+composite
+weighted mean of member normalised scores
+10. Glossary
+Consolidates Section 1.3 plus the following:
+Term
+Definition
+Weighted Average
+Volume-averaged mean of normalised responses.
+TOP n Box
+Percentage of respondents selecting one of the top n scale values.
+Weighted Composite
+CXI method: normalised weighted mean of member KPI scores.
+Effective %
+A member KPI's normalised proportion of the CXI composite.
+Emoji Set
+A named collection of emoji used to represent scale values (e.g., FaceClassic).
+Band
+One of the three threshold segments: Unsatisfactory, Average, Satisfactory.
+11. Resolved Decisions
+All previously open questions for this module have been resolved and incorporated into the relevant sections. Recorded here for traceability.
+#
+Decision
+D1
+CHS, VFM, and Agent Score are fully user-configurable like any other KPI (user-chosen scale and calculation method). Agent Score is survey-derived (no external ingestion). Definitions and sample questions are in Section 3.1.4.
+D2
+In the TOP n Box warning, &quot;number of scale values&quot; means distinct scale points (e.g., 7 for 1–7). n must be a positive integer strictly less than the scale maximum. See FR-2.16, FR-2.17.
+D3
+Canonical sample question prompts per standard KPI are confirmed and used as default Question Preview prompts. See Section 3.1.4.
+D4
+CXI on the M-07 dashboard displays the composite score with a member breakdown (each member KPI's score and effective weight). See FR-4.8.
+D5
+The emoji set catalogue beyond FaceClassic is confirmed. See FR-2.25.
+D6
+P-02 Analyst has read-only access to the KPI Configuration page (in addition to list view). See FR-5.3 and the permission matrix in Section 3.5.1.
+
+Part 2 — Platform Settings
+12. Settings Page
+12.1 Description &amp; Priority
+The Settings page is the platform's tenant-level configuration surface. It is organised as a list of section headers; selecting a header opens that section's content on a separate page (master → detail navigation), keeping each configuration area focused and uncluttered.
+Priority: Must-have — the Customer Journey section is the canonical surface for the tenant-level ScoringConfig consumed by M-16 and M-06.
+NOTE  UI reference: The prototype shows the Settings page titled &quot;Nabadat Settings&quot; with two section groups: Organization (Name, Logo, Industry) and Customer Journey (Alpha, MOT Multiplier, Responses Count Floor, Flag Percentile, Rolling Window Days). Each Customer Journey parameter carries an explanatory tooltip (the example shown explains Alpha).
+12.2 Page Structure &amp; Navigation
+FR-S1: The Settings landing page presents the available configuration sections as a navigable list, grouped under headers. v1 sections: Organization, Customer Journey, Notifications, Branding Theme, and Localization Defaults. (Organization and Customer Journey are fully specified in this document; Notifications, Branding Theme, and Localization Defaults are in v1 scope and specified in their own briefs.)
+FR-S2: Selecting a section opens all that section's content on the right part of the page navigating down to the selected sectionasa separate, dedicated page (not an inline accordion). A back control returns to the Settings landing list.
+
+
+FR-S3: Each section page displays the section title as its page header, followed by that section's fields.
+FR-S4: Unsaved-changes guard: navigating away from a section page with pending edits prompts &quot;You have unsaved changes. Are you sure you want to leave?&quot;
+FR-S5: All Settings sections are scoped to the current tenant. Changes apply tenant-wide.
+FR-S6: The Settings area is reachable from the platform navigation and follows Nabadat brand layout (navy/teal, RTL parity for Arabic).
+12.3 Section A — Organization
+12.3.1 Functional Requirements
+FR-S7: The Organization section page contains: Name, Logo, Industry.
+FR-S8: Name — text input, the tenant's display name. Required. Max 150 characters.
+FR-S9: Logo — image upload. Accepts PNG/JPG/SVG; recommended max 2 MB; displayed as the tenant brand mark across the platform. Shows current logo with a replace control.
+FR-S10: Industry — dropdown selecting the tenant's primary vertical (Banking, Telecommunications, Government, Automotive, Entertainment, Services). Drives industry-default templates elsewhere on the platform.
+FR-S11: A Save action persists Organization changes; all changes are audit-logged (M-11).
+12.3.2 Permissions
+FR-S12: Organization settings are editable by the Tenant IT Administrator (P-07) and/or CX Program Manager (P-01) per the tenant's RBAC configuration. Enforced at UI and API.
+12.4 Section B — Customer Journey (Scoring Configuration)
+12.4.1 Description
+This section is the editing surface for the tenant-level ScoringConfig entity (owned by M-16, consumed by M-06). One ScoringConfig row exists per tenant; the values set here apply to all journeys in the tenant. This is the same entity defined in the M-16 SRS Section 4.2.9 — this page is its UI.
+NOTE  These parameters control the Strategic Satisfaction Scoring Model (M-16 Section 11). A change here applies to all subsequent M-06 computation cycles for all journeys of the tenant. Values are snapshotted into each JourneyVersion at publish time, so historical scores are unaffected by later changes.
+12.4.2 Functional Requirements
+FR-S13: The Customer Journey section page exposes five parameters: Alpha (α), MOT Multiplier, Responses Count Floor (n_floor), Flag Percentile, Rolling Window Days.
+FR-S14: Each parameter has a small &quot;?&quot; info icon at its top-right. Hovering (or, on touch devices, tapping) the icon shows a tooltip explaining the parameter and guiding the CX manager toward an appropriate value. Tooltip content is specified in Section 12.4.4.
+FR-S15: Alpha (α) — presented as a single linked slider spanning 0.000–1.000 (default 0.500). β is always derived as 1 − α and displayed read-only beside the slider; β is never independently editable. Moving the slider updates the displayed β live.
+FR-S16: MOT Multiplier — numeric input/slider, range 1.0–2.0 (default 1.5), step 0.1.
+FR-S17: Responses Count Floor (n_floor) — integer input, minimum 1 (default 100).
+FR-S18: Flag Percentile — integer input, valid range 1–49 (default 25).
+FR-S19: Rolling Window Days — integer input, minimum 7 (default 30).
+FR-S20: A Save action persists the ScoringConfig via PUT /api/tenant/scoring-config. On save, the API re-validates every constraint (Section 12.4.5); validation failures return field-level errors and block the save.
+FR-S21: All changes are written to the M-11 audit log with actor, timestamp, parameter, previous value, and new value.
+12.4.3 Data Model — ScoringConfig (Tenant-Level)
+One row per tenant. Owned by M-16; surfaced and edited here; consumed by M-06.
+Field
+Type
+Nullable
+Notes
+tenant_id
+uuid (FK → M-11 Tenant)
+No
+One ScoringConfig per tenant. Unique constraint on tenant_id.
+alpha
+numeric(4,3)
+No
+Customer importance blend. Range 0.000–1.000. Default 0.500. Check: alpha BETWEEN 0.0 AND 1.0.
+mot_multiplier
+numeric(3,1)
+No
+MOT amplification. Range 1.0–2.0. Default 1.5. Check: mot_multiplier BETWEEN 1.0 AND 2.0.
+n_floor
+integer
+No
+Hard minimum response count. Default 100. Check: n_floor &gt;= 1.
+flag_percentile
+integer
+No
+The k in P_k used to compute n_flag_threshold. Default 25. Valid range 1–49. Check: flag_percentile BETWEEN 1 AND 49.
+rolling_window_days
+integer
+No
+Window for P_k and median computation; also the cold-start period length. Default 30. Check: rolling_window_days &gt;= 7.
+NOTE  beta is not stored. It is always derived as 1 − alpha at computation time. Storing β would risk α + β ≠ 1.0 through a partial update.
+12.4.4 Tooltip Content (the ? icon per parameter)
+Each tooltip gives the CX manager (1) what the parameter does, (2) the valid range and default, and (3) practical guidance on choosing a value.
+Alpha (α):
+TOOLTIP  Customer importance blend weight. Applies to all journeys in this tenant. Alpha is the weight given to Importance to Customer versus Importance to Business when calculating a touchpoint's weight within its stage. A higher alpha means customer importance counts more; a lower alpha means business importance counts more. Beta is automatically set to (1 − alpha), so the two always sum to 1.0. Range 0.0–1.0, default 0.5 (balanced). Set higher (e.g., 0.7) if your programme prioritises the customer's perspective; set lower if commercial/compliance priorities should dominate scoring.
+MOT Multiplier:
+TOOLTIP  Score amplification applied to touchpoints flagged as a Moment of Truth (MoT) — the make-or-break interactions that disproportionately shape overall perception. A MoT touchpoint's weight in stage scoring is multiplied by this value; non-MoT touchpoints are unaffected (multiplier of 1.0). Range 1.0–2.0, default 1.5. Use 1.0 to disable MoT amplification entirely; raise toward 2.0 to make Moments of Truth dominate stage scores more strongly. The 2.0 cap prevents a single touchpoint from overwhelming the score.
+Responses Count Floor (n_floor):
+TOOLTIP  The hard minimum number of responses a touchpoint must collect before its score is trusted. Below this floor, the touchpoint is marked &quot;insufficient&quot;, excluded from scoring entirely, and shown as &quot;—&quot; rather than a number. This protects you from drawing conclusions from too few responses. Default 100. Set higher if your tenant has high response volumes and you want stricter reliability; set lower for low-traffic programmes. It also acts as the flat threshold during a journey's first few weeks before enough history exists for adaptive thresholds.
+Flag Percentile:
+TOOLTIP  Sets how aggressively low-sample touchpoints are flagged as &quot;low confidence&quot;. The system finds the response count at this percentile across all touchpoints in a journey; any touchpoint below it gets a low-sample badge. Default 25 (the bottom quarter by response volume is flagged). Valid range 1–49. Raise it (e.g., 30 or 32) to apply a stricter standard and flag more touchpoints as low-sample; lower it to flag fewer. This affects display/flagging only — it does not exclude touchpoints from scoring (that's the Responses Count Floor's job).
+Rolling Window Days:
+TOOLTIP  The time window over which response counts are measured to compute the adaptive confidence thresholds (the median and the flag percentile). It is also the cold-start period: during a new journey's first window, the system falls back to the Responses Count Floor as a flat threshold until enough history accrues. Default 30 days, minimum 7. A 30-day window aligns with the typical expectation that meaningful journey data appears about a month after launch. Use a longer window for slower-moving programmes; a shorter one reacts faster but is noisier.
+CONSTRAINT  Tooltips are informational. They must be available on hover (desktop) and on tap (touch), must be fully localized (EN + AR), and must not block interaction with the field.
+12.4.5 Validation Rules
+Parameter
+Rule
+Error message
+Alpha (α)
+0.0 ≤ α ≤ 1.0; β auto-derived
+&quot;Alpha must be between 0.0 and 1.0.&quot;
+MOT Multiplier
+1.0 ≤ value ≤ 2.0
+&quot;MOT multiplier must be between 1.0 and 2.0.&quot; (API: MOT_MULTIPLIER_OUT_OF_RANGE)
+Responses Count Floor
+integer ≥ 1
+&quot;Responses count floor must be at least 1.&quot;
+Flag Percentile
+integer 1–49
+&quot;Flag percentile must be between 1 and 49.&quot;
+Rolling Window Days
+integer ≥ 7
+&quot;Rolling window must be at least 7 days.&quot;
+
+FR-S22: α is presented only as a linked slider — direct β entry is never offered. Any API payload where α is out of range is rejected with INVALID_ALPHA_BETA_SUM.
+12.4.6 Business Rules
+BR-S1: ScoringConfig is tenant-scoped — one row per tenant; there are no per-journey overrides in v1.
+BR-S2: A change to any parameter takes effect on the next M-06 computation cycle and never retroactively alters historical ScoreSnapshots.
+BR-S3: Each JourneyVersion snapshots the active ScoringConfig values at publish time, so historical recomputation uses the parameters that were live for that version.
+BR-S4: Editing ScoringConfig is restricted to the CX Program Manager (P-01).
+12.4.7 Permissions
+Action
+P-01 CX PM
+P-07 IT Admin
+Others
+View Customer Journey settings
+✓
+✓
+—
+Edit ScoringConfig parameters
+✓
+—
+—
+View/Edit Organization settings
+✓ (per RBAC)
+✓
+—
+12.5 External Interface Requirements (Settings)
+GET /api/tenant/scoring-config — read current tenant ScoringConfig.
+PUT /api/tenant/scoring-config — update; validates α ∈ [0.0, 1.0] and mot_multiplier ∈ [1.0, 2.0]; returns 400 INVALID_ALPHA_BETA_SUM or 400 MOT_MULTIPLIER_OUT_OF_RANGE on violation. Permission: P-01 only.
+GET /api/tenant/organization and PUT /api/tenant/organization — read/update Organization settings (name, logo, industry).
+12.6 Non-Functional Requirements (Settings)
+NFR-S1: Tooltips render within 100ms of hover/tap and are keyboard-accessible (focusable ? icon, dismissible with Esc) per WCAG 2.1 AA.
+NFR-S2: Full EN/AR localization and RTL parity for all Settings sections, labels, tooltips, and errors.
+NFR-S3: Settings changes are atomic and audit-logged (M-11).
+NFR-S4: The α slider and derived β display stay synchronised with no perceptible lag.
+12.7 Resolved Decisions (Settings)
+All previously open Settings questions have been resolved and incorporated into the relevant sections. Recorded here for traceability.
+#
+Status
+Decision
+Q-S1
+✓ Resolved
+n_floor default is confirmed as 100 (superseding the earlier 5 and 500 values). Applied in FR-S17 and the ScoringConfig data model (Section 12.4.3). The separate M-16 SRS should be aligned to 100 in its own revision.
+Q-S2
+✓ Resolved
+The Industry enum must match the M-11 tenant-provisioning industry list. The Settings Industry dropdown reads from the same canonical list.
+Q-S3
+✓ Resolved
+Additional Settings sections (Notifications, Branding Theme, Localization Defaults) are IN v1 scope and are listed as named sections in the Settings page structure (Section 12.2 / FR-S1).
+Change Log
+Version
+Date
+Changes
+1.0
+2026-06-14
+Initial combined SRS. Part 1 — M-06 KPI Management &amp; Configuration aligned to prototype screens (KPI list, New KPI create mode, KPI Configuration edit mode for NPS): two-panel config with right-side live preview; universal gauge; CXI composite variant; standard vs custom editability; permissions, localization, data model, normalisation reference. Part 2 — Platform Settings page: master/detail navigation, Organization section, Customer Journey scoring configuration surfacing the tenant-level ScoringConfig with per-parameter ? tooltips.
+1.1
+2026-06-14
+Resolved all six Part 1 open questions and folded them into the spec: standard KPI definitions + sample questions (Section 3.1.4); TOP n Box scale-points clarification and n &lt; scale-max constraint (FR-2.16/2.17); confirmed default question prompts; CXI dashboard member breakdown (FR-4.8); confirmed emoji set catalogue (FR-2.25); P-02 Analyst read-only config access (FR-5.3, permission matrix). Open Questions section replaced with Resolved Decisions log. Trimmed buffer/common-sense text from Operating Environment and Assumptions.
+1.2
+2026-06-21
+Perspectives redefined as independent drill-down dimensions (FR-2.13, FR-2.14, FR-2.14a, FR-2.14b; Section 3.1.4 note); KPIPerspective entity extended with id (PK) and display_order, plus per-perspective scoring note (Section 4.2.3). Settings open questions resolved: n_floor default set to 100 (FR-S17, Section 12.4.3, tooltip); Industry enum must match M-11 (Q-S2); Notifications, Branding Theme, and Localization Defaults added as v1 Settings sections (FR-S1); Section 12.7 converted to Resolved Decisions. Added Scale Endpoint Descriptions field (Field 5a, FR-2.23a/b). Renamed &quot;KPI Visualization&quot; to &quot;Dashboard Preview&quot; and enriched it with NPS Promoter/Passive/Detractor breakdown, target marker, period delta, and response count (FR-3.13–3.15). UI aligned to latest prototype screens.
+
+Confidential — NabadatCX — M-06 &amp; Settings SRS v1.2

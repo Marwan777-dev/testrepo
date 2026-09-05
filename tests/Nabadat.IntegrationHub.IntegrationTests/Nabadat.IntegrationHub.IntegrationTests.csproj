@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Nabadat.IntegrationHub.IntegrationTests</RootNamespace>
+    <AssemblyName>Nabadat.IntegrationHub.IntegrationTests</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <!-- Testcontainers Postgres 16 backs the module's end-to-end lane (no Elasticsearch container:
+       M-13 owns no ES projection — AD-04, plan.md Technical Context);
+       WebApplicationFactory<Program> drives in-process HTTP (T018's factory).
+       ClosedXML supplies the Excel reader/writer US7's mapping import/export tests need
+       (T185/T186, VR-F09) — the only package here beyond the SurveyBuilder baseline. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="xunit.v3" Version="1.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.*" />
+    <PackageReference Include="FluentAssertions" Version="6.12.*" />
+    <PackageReference Include="NSubstitute" Version="5.*" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.*" />
+    <PackageReference Include="ClosedXML" Version="0.104.*" />
+    <!-- Compute live TOTP codes from a seeded MFA secret so the factory can drive the real
+         login → MFA verify → bearer-session flow (matches M-10 / M-01's OTP.NET). -->
+    <PackageReference Include="OTP.NET" Version="1.*" />
+  </ItemGroup>
+
+  <!-- References the host (for WebApplicationFactory<Program>, added by T018 — TODO-M13-001) and the
+       module (entity types + seeding helpers). Every module baseline SQL, including
+       IntegrationHub_Baseline.sql, flows to this project's output `Migrations/` folder transitively
+       through those references, which is where the factory reads them from. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Nabadat.TenantAdmin\Nabadat.TenantAdmin.csproj" />
+    <ProjectReference Include="..\..\src\Nabadat.IntegrationHub\Nabadat.IntegrationHub.csproj" />
+  </ItemGroup>
+
+</Project>

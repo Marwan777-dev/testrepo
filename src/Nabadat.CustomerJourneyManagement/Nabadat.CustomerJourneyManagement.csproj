@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Nabadat.CustomerJourneyManagement</RootNamespace>
+    <AssemblyName>Nabadat.CustomerJourneyManagement</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Nabadat.UserManagement\Nabadat.UserManagement.csproj" />
+  </ItemGroup>
+
+  <!-- T012: raw-SQL tenant-schema baseline copied to the output `Migrations/`
+       folder so the migration runner (and the integration-test CustomerJourneyManagementApplicationFactory,
+       transitively via project reference) can read it from AppContext.BaseDirectory. -->
+  <ItemGroup>
+    <Content Include="Migrations\001_customer_journey_baseline.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Published interfaces (IJourneyConfigReader, IReportContractReader,
+       IJourneyScoreProvider) live in-module under Domain/Interfaces/ per the M-10
+       precedent (no shared Nabadat.Platform.Contracts project exists). M-06/M-07
+       consume them via a direct reference to this module's assembly (AD-01). -->
+
+</Project>

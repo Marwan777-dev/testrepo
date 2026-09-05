@@ -1,0 +1,319 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================
+   Nabdat Design System — Brand Tokens
+   VOC SaaS · Arabic-first · Dark mode ready
+   Palette: Cyan · Mint · Navy
+   ============================================ */
+
+@theme inline {
+  /* Typography — Poppins (body), Sora (headings), IBM Plex (Arabic fallback) */
+  --font-heading: "Sora", "Poppins", "IBM Plex Sans Arabic", sans-serif;
+  --font-sans: "Poppins", "IBM Plex Sans Arabic", sans-serif;
+  --font-mono: "Fira Code", monospace;
+
+  /* ── Nabadat Brand Colors ─────────────────
+       Available as Tailwind utilities:
+       bg-nb-cyan, text-nb-mint, border-nb-navy, etc.
+       RULE: Brand colors for chrome/nav/CTAs only.
+       NEVER use brand colors to signal KPI status. */
+
+  /* Brand ramps reference raw --nb-* values (defined in :root below) so a
+       tenant theme can re-skin every nb-* utility by overriding those vars.
+       Same indirection pattern as the semantic tokens (--color-primary: var(--primary)). */
+
+  /* Cyan family — Primary brand */
+  --color-nb-cyan: var(--nb-cyan);
+  --color-nb-cyan-100: var(--nb-cyan-100);
+  --color-nb-cyan-200: var(--nb-cyan-200);
+  --color-nb-cyan-300: var(--nb-cyan-300);
+  --color-nb-cyan-700: var(--nb-cyan-700);
+  --color-nb-cyan-800: var(--nb-cyan-800);
+  --color-nb-cyan-900: var(--nb-cyan-900);
+
+  /* Mint family — Secondary brand */
+  --color-nb-mint: var(--nb-mint);
+  --color-nb-mint-100: var(--nb-mint-100);
+  --color-nb-mint-200: var(--nb-mint-200);
+  --color-nb-mint-300: var(--nb-mint-300);
+  --color-nb-mint-700: var(--nb-mint-700);
+  --color-nb-mint-800: var(--nb-mint-800);
+  --color-nb-mint-900: var(--nb-mint-900);
+
+  /* Navy family — Wordmark, dark surfaces, text */
+  --color-nb-navy: var(--nb-navy);
+  --color-nb-navy-100: var(--nb-navy-100);
+  --color-nb-navy-200: var(--nb-navy-200);
+  --color-nb-navy-300: var(--nb-navy-300);
+  --color-nb-navy-700: var(--nb-navy-700);
+  --color-nb-navy-800: var(--nb-navy-800);
+  --color-nb-navy-900: var(--nb-navy-900);
+
+  /* Neutral palette */
+  --color-nb-dark: var(--nb-dark);
+  --color-nb-dark-2: var(--nb-dark-2);
+  --color-nb-dark-3: var(--nb-dark-3);
+  --color-nb-stone: var(--nb-stone);
+  --color-nb-stone-lt: var(--nb-stone-lt);
+  --color-nb-cloud: var(--nb-cloud);
+
+  /* ── D1–D5 Semantic KPI Colors ────────────
+       RULE: Only for KPI status indicators.
+       NEVER use decoratively or for chart series. */
+  --color-d1: #1a7a3c;
+  --color-d1-light: #d4f4e2;
+  --color-d1-dark: #0d4a24;
+  --color-d2: #2eb85c;
+  --color-d2-light: #c8f5db;
+  --color-d2-dark: #156632;
+  --color-d2-hover: #b0ecc7; /* hover step for d2-light tinted surfaces */
+  --color-d3: #e8a020;
+  --color-d3-light: #fff0cc;
+  --color-d3-dark: #7a5000;
+  --color-d4: #e05c1a;
+  --color-d4-light: #ffe4d0;
+  --color-d4-dark: #7a2800;
+  --color-d5: #c01b2a;
+  --color-d5-light: #ffd6da;
+  --color-d5-dark: #6b0010;
+
+  /* Named gradient tokens */
+  --color-nb-gradient-start: #1ec99a;
+  --color-nb-gradient-end: #00b4d8;
+
+  /* Semantic shadcn color mappings */
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+
+  /* Border radius scale — hard 16px ceiling (nothing exceeds rounded-lg).
+       sm = action buttons, md = inputs/tiles, lg = cards & popups (max).
+       xl…4xl are clamped to 16px so legacy aliases can never round more. */
+  --radius-sm: 0.5rem; /* 8px  — action buttons, badges */
+  --radius-md: 0.75rem; /* 12px — inputs, inner tiles */
+  --radius-lg: 1rem; /* 16px — cards, dialogs, sheets, popovers (max) */
+  --radius-xl: 1rem; /* 16px (capped) */
+  --radius-2xl: 1rem; /* 16px (capped) */
+  --radius-3xl: 1rem; /* 16px (capped) */
+  --radius-4xl: 1rem; /* 16px (capped) */
+}
+
+/* ============================================
+   Brand ramp raw values — TENANT-OVERRIDABLE
+   These feed the nb-* utilities indirectly (via @theme inline above), so a
+   tenant theme re-skins every nb-* usage by overriding these in a
+   <style id="tenant-theme"> (deriveThemeVars output). Default = Nabadat.
+   FIXED, never themed: --color-nb-gradient-* (logo gradient) and D1–D5.
+   ============================================ */
+:root {
+  --nb-cyan: #0d8bbc;
+  --nb-cyan-100: #ccf0fb;
+  --nb-cyan-200: #98e1f2;
+  --nb-cyan-300: #59ccea;
+  --nb-cyan-700: #0087a8;
+  --nb-cyan-800: #005f7a;
+  --nb-cyan-900: #003a4d;
+
+  --nb-mint: #13db9b;
+  --nb-mint-100: #cbf5eb;
+  --nb-mint-200: #96edd4;
+  --nb-mint-300: #54de8c;
+  --nb-mint-700: #0da670;
+  --nb-mint-800: #07704e;
+  --nb-mint-900: #034530;
+
+  --nb-navy: #1e2235;
+  --nb-navy-100: #e3ebf4;
+  --nb-navy-200: #c4cadd;
+  --nb-navy-300: #8b90a5;
+  --nb-navy-700: #161b29;
+  --nb-navy-800: #0e1018;
+  --nb-navy-900: #070b10;
+
+  --nb-dark: #0d0f14;
+  --nb-dark-2: #1b1c27;
+  --nb-dark-3: #2e3044;
+  --nb-stone: #7a8196;
+  --nb-stone-lt: #b8bfce;
+  --nb-cloud: #eef1f7;
+}
+
+/* ============================================
+   Light Theme (default)
+   Clean whites, cyan CTAs, navy text
+   ============================================ */
+:root {
+  color-scheme: light;
+
+  /* Lightly navy-tinted off-white — just enough that white cards lift, but
+       lighter than the first pass (#F2F5F9) so the page doesn't read grey */
+  --background: #f7f9fc;
+  --foreground: #1e2235;
+
+  --card: #ffffff;
+  --card-foreground: #1e2235;
+  --popover: #ffffff;
+  --popover-foreground: #1e2235;
+
+  /* Primary = Nabadat Cyan (CTAs, active nav, headline KPIs) */
+  --primary: #0d8bbc;
+  --primary-foreground: #ffffff;
+
+  /* Secondary = Nabadat Mint (accents, secondary CTAs) */
+  --secondary: #13db9b;
+  --secondary-foreground: #ffffff;
+
+  --muted: #eef1f7;
+  --muted-foreground: #7a8196;
+
+  /* Accent = Cloud (subtle backgrounds) */
+  --accent: #eef1f7;
+  --accent-foreground: #1e2235;
+
+  --destructive: #c01b2a;
+  --border: #c4cadd;
+  --input: #c4cadd;
+  --ring: #0d8bbc;
+
+  /* Chart colors — brand palette only, NEVER semantic */
+  --chart-1: #0d8bbc;
+  --chart-2: #13db9b;
+  --chart-3: #8b90a5;
+  --chart-4: #0087a8;
+  --chart-5: #0da670;
+
+  --radius: 0.75rem;
+
+  /* Sidebar = Navy (dark, professional) */
+  --sidebar: #1e2235;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #0d8bbc;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #161b29;
+  --sidebar-accent-foreground: #ccf0fb;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #0d8bbc;
+}
+
+/* ============================================
+   Dark Theme — Navy-tinted
+   Deep navy-black base, NOT generic grey.
+   Keeps brand identity strong in dark mode.
+   ============================================ */
+.dark {
+  color-scheme: dark;
+
+  /* Base surfaces — a stepped navy-tinted ladder, never pure #000. Each surface is
+       a clear lightness STEP above the last so regions read as distinct:
+         sidebar #070B10  <  background #171923  <  card #22252F  <  muted #30333E.
+       The canvas sits a WIDE ~0.07 L step above the deep sidebar (was ~0.055, which
+       still let the near-black sidebar and dark canvas blur together — the exact
+       "sidebar and background look the same" bug). The sidebar stays #070B10; going
+       deeper is a trap (near-black can't hold tint), so the canvas is lifted away from
+       it instead. Keep this gap wide. The derived-tenant path mirrors this in
+       derive-theme.ts (DARK.background / DARK.sidebar). */
+  --background: #171923;
+  --foreground: #ededef;
+
+  /* Card = elevated surface, a clear step above the canvas so cards lift */
+  --card: #22252f;
+  --card-foreground: #ededef;
+  --popover: #22252f;
+  --popover-foreground: #ededef;
+
+  /* Primary brightened for dark bg readability */
+  --primary: #59ccea;
+  --primary-foreground: #1e2235;
+
+  /* Secondary mint lightened for dark bg */
+  --secondary: #54de8c;
+  --secondary-foreground: #1e2235;
+
+  /* Muted = the RAISED navy surface (hover states, active items, tracks, status
+       pills, table-header band). Must sit clearly ABOVE card so hovers/tracks read. */
+  --muted: #30333e;
+  --muted-foreground: #b8bfce;
+
+  /* Accent = the highlight surface (select-item focus, feature areas) — LIGHTER
+       than card so a highlighted row/item reads as raised, not recessed. */
+  --accent: #292c37;
+  --accent-foreground: #eef1f7;
+
+  --destructive: #ffd6da;
+
+  /* Borders & field edges — navy-tinted but a real step LIGHTER than the surfaces
+       they divide. Solid tints give a legible hairline on card, bg, and popover
+       alike (a low-alpha navy resolved ~equal to the surface → invisible). Input is
+       a touch lighter than border so form fields read as bounded wells on a card. */
+  --border: #383c54;
+  --input: #434864;
+  --ring: #59ccea;
+
+  /* Charts — lightened variants for dark background contrast */
+  --chart-1: #59ccea;
+  --chart-2: #54de8c;
+  --chart-3: #b8bfce;
+  --chart-4: #98e1f2;
+  --chart-5: #96edd4;
+
+  /* Sidebar — even deeper navy in dark mode */
+  --sidebar: #070b10;
+  --sidebar-foreground: #ededef;
+  --sidebar-primary: #59ccea;
+  --sidebar-primary-foreground: #1e2235;
+  --sidebar-accent: #161b29;
+  --sidebar-accent-foreground: #ccf0fb;
+  /* Visible navy divider between the deep sidebar (#070B10) and the canvas —
+       brightened (was #313650) so the seam clearly reads as an edge, not a faint hint.
+       The lightness gap does most of the separation; this divider seals it. */
+  --sidebar-border: #444753;
+  --sidebar-ring: #59ccea;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

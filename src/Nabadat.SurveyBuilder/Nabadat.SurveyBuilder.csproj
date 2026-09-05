@@ -1,0 +1,72 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Nabadat.SurveyBuilder</RootNamespace>
+    <AssemblyName>Nabadat.SurveyBuilder</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Module hosts ASP.NET Core controllers (Api/) discovered as an ApplicationPart by the host.
+       The framework reference also transitively provides Microsoft.Extensions.Hosting
+       (IHostedService/BackgroundService) — no separate package pin is added so the net10 shared
+       framework version stays authoritative and TreatWarningsAsErrors doesn't trip on NU1605. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <!-- T001: M-01 runtime dependencies.
+       - Npgsql EF Core 10 → tenant-schema persistence (maps onto _Baseline.sql; no EF migrations, DB-08).
+       - Elastic.Clients.Elasticsearch 8.x → Report/Analytics read adapters (attia, later phases).
+       - HtmlSanitizer (Ganss.Xss namespace) → welcome / thank-you rich-text sanitiser (T027–T029, research.md §1). -->
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageReference Include="Elastic.Clients.Elasticsearch" Version="8.*" />
+    <PackageReference Include="HtmlSanitizer" Version="9.*" />
+  </ItemGroup>
+
+  <!-- HtmlSanitizer (Ganss.Xss) transitively pins AngleSharp [0.17.1] EXACTLY (its HTML/CSS
+       parser), which newly carries advisory GHSA-pgww-w46g-26qg (moderate; a parser
+       resource-exhaustion / DoS issue, fixed in AngleSharp 1.x). It cannot be bumped
+       independently — HtmlSanitizer's dependency is a pinned exact version, so a patched
+       AngleSharp only arrives with a future HtmlSanitizer release. M-01's sanitiser (T027–T029)
+       only parses trusted-authored welcome/thank-you rich text server-side at ingress, never
+       attacker-controlled bulk input, so the DoS surface is not reachable here. Suppress this one
+       advisory so TreatWarningsAsErrors stays on for everything else; REVISIT and remove once a
+       HtmlSanitizer release moves to a patched AngleSharp. Mirrors the same suppression in
+       Nabadat.KpiManagement (which pins HtmlSanitizer 8.1.870). -->
+  <ItemGroup>
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-pgww-w46g-26qg" />
+  </ItemGroup>
+
+  <!-- Cross-module published interfaces consumed by M-01, via direct assembly references
+       (AD-01, mirroring the M-06 template). All acyclic — none of these reference M-01.
+       - Nabadat.UserManagement → IPermissionChecker (M-10)
+       - Nabadat.CustomerJourneyManagement → IJourneyReader (M-16)
+       - Nabadat.KpiManagement → IKpiCatalogReader (M-06)
+       NOTE: Nabadat.TenantAdmin is deliberately NOT referenced. It is the host and references
+       THIS module (T006), so a reference back would be a project cycle. The M-11 readers T001
+       names (ITenantSettingsReader / ITenantDesignGuidelinesReader) do not exist yet and are
+       wired via a module-declared port implemented in the host — see T020 / T080 (TODO SB-001). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Nabadat.UserManagement\Nabadat.UserManagement.csproj" />
+    <ProjectReference Include="..\Nabadat.CustomerJourneyManagement\Nabadat.CustomerJourneyManagement.csproj" />
+    <ProjectReference Include="..\Nabadat.KpiManagement\Nabadat.KpiManagement.csproj" />
+  </ItemGroup>
+
+  <!-- T008: raw-SQL tenant-schema baseline. Copied to the output `Migrations/` folder (and,
+       transitively via the host's project reference, to the host output) so the dev
+       DevTenantSchemaBootstrapper and the integration-test factory can read it from
+       AppContext.BaseDirectory. Output name is module-prefixed (SurveyBuilder_Baseline.sql)
+       via Link: the bare `_Baseline.sql` name already belongs to the M-10 baseline that flows
+       into the same shared `Migrations/` output folder, so an unprefixed copy would collide.
+       The source keeps the canonical `_Baseline.sql` name inside the module (Article 1A). -->
+  <ItemGroup>
+    <Content Include="Infrastructure\Migrations\_Baseline.sql"
+             Link="Migrations\SurveyBuilder_Baseline.sql"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

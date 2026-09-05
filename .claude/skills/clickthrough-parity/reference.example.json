@@ -1,0 +1,17 @@
+{
+  "//": "Where the clickthrough-parity skill finds the two apps it compares. Copy this file to `reference.json` (gitignored) and set the values for YOUR machine. The skill reads reference.json when present so an automatic run — the /speckit-implement after_implement hook — does not have to stop and ask. It still NEVER guesses, and never falls back to this repo's stale `clickthrough-reference/` folder: if reference.json is absent and no path is passed in the prompt, the skill asks.",
+
+  "//clickthroughDir": "Local checkout of the standalone Nabadat click-through (the DESIGN SOURCE OF TRUTH), on the design branch. A path relative to this repo's root travels between machines; an absolute path does not. Prefer a sibling checkout.",
+  "clickthroughDir": "../nabadat-clickthrough",
+
+  "//clickthroughBaseUrl": "Where that checkout is being served. It must NOT be the product's port. Start it with: npm run dev -- --port 4000 --strictPort",
+  "clickthroughBaseUrl": "http://localhost:4000",
+
+  "//frontendBaseUrl": "The RUNNING product frontend (frontend/). Two rules: (1) use the tenant subdomain — a bare `localhost` host returns tenant.subdomain_missing; (2) do not assume :5173 — on a machine where the click-through occupies the Vite default, the product runs elsewhere. Verify with the lsof check in USAGE.md §3, and derive the scheme from frontend/vite.config.ts (`server.https` unset ⇒ http).",
+  "frontendBaseUrl": "http://e2e.localhost:5173",
+
+  "//credentials": "Sign-in comes from the E2E lane's gitignored tests/Nabadat.E2ETests/appsettings.local.json (copy from its .example). Not duplicated here — one source for credentials.",
+
+  "//persona": "Default persona to sign in as when the prompt doesn't name one. Permissions change what renders, so a read-only persona hides the create/edit actions a parity run is checking.",
+  "persona": "P-01"
+}

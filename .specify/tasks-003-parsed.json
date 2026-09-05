@@ -1,0 +1,1108 @@
+[
+  {
+    "Id": "T001",
+    "Parallel": false,
+    "Story": "",
+    "Description": "Create the `src/Nabadat.Platform.M06/` directory structure per [plan.md](plan.md) §Project Structure (`Api/`, `Application/`, `Domain/`, `Infrastructure/`); scaffold `src/Nabadat.Platform.M06/Nabadat.Platform.M06.csproj` targeting `net10.0` with package refs `Npgsql.EntityFrameworkCore.PostgreSQL`, `FluentValidation`, `HtmlSanitizer`, `Microsoft.AspNetCore.App` framework reference; add to `Nabadat.TenantAdmin.sln`.",
+    "Phase": "Phase 1: Setup (Shared Infrastructure)"
+  },
+  {
+    "Id": "T002",
+    "Parallel": false,
+    "Story": "",
+    "Description": "Scaffold `tests/Nabadat.Platform.M06.UnitTests/Nabadat.Platform.M06.UnitTests.csproj` (xUnit v3 1.*, FluentAssertions **6.12.\\*** pinned, NSubstitute 5.\\*, `Microsoft.Extensions.TimeProvider.Testing` 9.\\*); add a `<ProjectReference>` to `src/Nabadat.Platform.M06/Nabadat.Platform.M06.csproj`; add to solution. (Sequential after T001 because of the project reference.)",
+    "Phase": "Phase 1: Setup (Shared Infrastructure)"
+  },
+  {
+    "Id": "T003",
+    "Parallel": false,
+    "Story": "",
+    "Description": "Scaffold `tests/Nabadat.Platform.M06.IntegrationTests/Nabadat.Platform.M06.IntegrationTests.csproj` (xUnit v3, FluentAssertions 6.12.\\*, NSubstitute 5.\\*, `Testcontainers.PostgreSql` 4.\\*, `Microsoft.AspNetCore.Mvc.Testing` 10.\\*); add a `<ProjectReference>` to `src/Nabadat.Platform.M06/Nabadat.Platform.M06.csproj`; add to solution. (Sequential after T001 because of the project reference.)",
+    "Phase": "Phase 1: Setup (Shared Infrastructure)"
+  },
+  {
+    "Id": "T004",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Scaffold `tests/Nabadat.Portal.E2ETests/Nabadat.Portal.E2ETests.csproj` (MSTest + `Microsoft.Playwright.MSTest`) — first E2E project for the `frontend/` portal workspace per CLAUDE.md E2E Test Policy; add to solution; commit a gitignored `appsettings.local.json.template` (portal seeded-user creds + TOTP secret slot).",
+    "Phase": "Phase 1: Setup (Shared Infrastructure)"
+  },
+  {
+    "Id": "T005",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Run `pwsh tests/Nabadat.Portal.E2ETests/bin/Debug/net10.0/playwright.ps1 install` once to install Playwright browsers locally.",
+    "Phase": "Phase 1: Setup (Shared Infrastructure)"
+  },
+  {
+    "Id": "T006",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Add the new frontend feature directories `frontend/src/features/kpi-management/{pages,components,hooks}` and `frontend/src/features/settings/{pages,components,hooks}` plus the shared `frontend/src/components/cx/kpi/` directory; create empty `api.ts` files in each feature folder; restart Vite dev server and clear `frontend/node_modules/.vite` per CLAUDE.md \"Dev Environment Workflow\".",
+    "Phase": "Phase 1: Setup (Shared Infrastructure)"
+  },
+  {
+    "Id": "T007",
+    "Parallel": false,
+    "Story": "",
+    "Description": "Author migration `tools/Nabadat.Migrations/Migrations/M06_Baseline.sql` — creates four M-06 tables (`kpi_definitions`, `kpi_thresholds`, `kpi_perspectives`, `cxi_weights`) per [data-model.md](data-model.md) §1, the `kpi_definitions_short_name_lower_uniq` functional unique index, the cursor-pagination index, and seeds the eight standard KPIs in canonical order via `INSERT ... ON CONFLICT (LOWER(short_name)) DO NOTHING`. Author the matching `M06_Baseline_Rollback.sql`. **The corrective `UPDATE scoring_configs SET n_floor=100 WHERE n_floor=5` does NOT live here** — it ships as a separate M-16-owned migration in T007a per [data-model.md](data-model.md) §3.1 (AMENDMENT-008 / schema-ownership rule).",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T007a",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Author migration `tools/Nabadat.Migrations/Migrations/M16_NFloorDefaultBump.sql` (M-16-owned) — runs once per tenant schema with the corrective `UPDATE scoring_configs SET n_floor = 100 WHERE n_floor = 5` per Q-S1 / [data-model.md](data-model.md) §3.1. No rollback file (the change is canonical-forward only). This task lives in M-06's plan because Feature 003 surfaces the dependency, but the migration FILE is M-16-owned (placed alongside M-16's other migrations).",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T008",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Author migration `tools/Nabadat.Migrations/Migrations/M11_OrganizationSettings.sql` — creates `organization_settings` per [data-model.md](data-model.md) §2.1 with the `organization_settings_singleton_uniq` partial unique index and the `industry_valid` CHECK; author the rollback.",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T009",
+    "Parallel": false,
+    "Story": "",
+    "Description": "Run `dotnet build tools/Nabadat.Migrations` and apply all three migrations against a dev tenant schema via `dotnet run --project tools/Nabadat.Migrations -- --target=tenant --tenant-slug=dev-tenant`; verify the 8-row seed with the psql query from [quickstart.md](quickstart.md) §\"Provision a fresh tenant\" AND verify `scoring_configs.n_floor = 100` (the bump migration applied).",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T010",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Create `src/Nabadat.Platform.M06/Domain/ValueObjects/KpiType.cs`, `CalculationMethod.cs`, `Scale.cs`, `RepresentationStyle.cs`, `EmojiSet.cs` — C# enums matching [contracts/published-interfaces.md](contracts/published-interfaces.md) §1.",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T011",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Create `src/Nabadat.Platform.M06/Domain/Entities/KpiDefinition.cs` per [data-model.md](data-model.md) §1.1.",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T012",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Create `src/Nabadat.Platform.M06/Domain/Entities/KpiThreshold.cs` per [data-model.md](data-model.md) §1.2.",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T013",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Create `src/Nabadat.Platform.M06/Domain/Entities/KpiPerspective.cs` per [data-model.md](data-model.md) §1.3.",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T014",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Create `src/Nabadat.Platform.M06/Domain/Entities/CxiWeight.cs` per [data-model.md](data-model.md) §1.4.",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T015",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Create `src/Nabadat.Platform.M06/Domain/Interfaces/IKpiDefinitionRepository.cs` + `Infrastructure/Persistence/KpiDefinitionRepository.cs` (EF Core).",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T016",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Create `IKpiThresholdRepository.cs` + `KpiThresholdRepository.cs`.",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T017",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Create `IKpiPerspectiveRepository.cs` + `KpiPerspectiveRepository.cs`.",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T018",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Create `ICxiWeightRepository.cs` + `CxiWeightRepository.cs` (with the deactivation-cascade query method `GetCxiMembershipsForKpiAsync(memberKpiId)`).",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T019",
+    "Parallel": false,
+    "Story": "",
+    "Description": "Add the published-interfaces project / namespace `Nabadat.Platform.Contracts.M06` and define `IKpiConfigReader` skeleton + the DTOs (`KpiDefinitionDto`, `KpiThresholdDto`, `KpiPerspectiveDto`, `CxiWeightDto`, `CxiSnapshotDto`, `CxiMemberBreakdownDto`, `BilingualText`) per [contracts/published-interfaces.md](contracts/published-interfaces.md) §1. Implementation comes from US-2 / US-3.",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T020",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Define `src/Nabadat.Platform.M16/Domain/Interfaces/IJourneyBindingQuery.cs` and `KpiBindingUsage` record per [contracts/published-interfaces.md](contracts/published-interfaces.md) §2; implement `src/Nabadat.Platform.M16/Application/Bindings/JourneyBindingQueryService.cs` with the SQL aggregation against M-16's tables.",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T021",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Define `src/Nabadat.Platform.M16/Domain/Interfaces/IScoringConfigStore.cs` and the DTOs per [contracts/published-interfaces.md](contracts/published-interfaces.md) §3; implement `src/Nabadat.Platform.M16/Application/ScoringConfig/ScoringConfigStore.cs` that reads/writes `scoring_configs` AND emits one `journey.scoring_config.updated` event in the same transaction; idempotent on no-op saves (emits zero events when diff is empty).",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T022",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Define `src/Nabadat.Platform.M11/Domain/Interfaces/IIndustryEnumProvider.cs` per [contracts/published-interfaces.md](contracts/published-interfaces.md) §4; implement returning the six canonical values in order.",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T023",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Create `src/Nabadat.Platform.M11/Domain/Entities/OrganizationSettings.cs` + `ValueObjects/Industry.cs`; define `IOrganizationSettingsStore.cs` + `ILogoStore.cs` per [contracts/published-interfaces.md](contracts/published-interfaces.md) §5 + §6; implement `OrganizationSettingsStore` (reads/writes the row + emits `settings.changed` in one transaction) and `LogoStore` (region-routed S3-compatible in SaaS / local FS in on-prem; reads `DEPLOYMENT_REGION`).",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T024",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Events/M17EventPublisher.cs` — wraps the M-17 `IEventPublisher` with M-06-shaped helpers (`PublishKpiSettingsChangedAsync`, `PublishOrganizationSettingsChangedAsync`).",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T025",
+    "Parallel": false,
+    "Story": "",
+    "Description": "Wire DI registration in the host (`src/Nabadat.TenantAdmin/Program.cs`): register M-06 services, controllers, M-11 stores, M-16 interfaces, and the SVG sanitiser configuration; add `services.AddNabadatM06()` extension method exposed by the M-06 module.",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T026",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Create `tests/Nabadat.Platform.M06.IntegrationTests/Infrastructure/M06ApplicationFactory.cs` — `WebApplicationFactory<Program> + IAsyncLifetime` that spins Testcontainers Postgres, runs `M06_Baseline.sql` + `M11_OrganizationSettings.sql`, exposes per-test `HttpClient` and seeding helpers (`SeedTenantAsync`, `SeedCustomKpiAsync`, `BindKpiToTouchpointAsync`).",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T027",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Create `tests/Nabadat.Platform.M06.IntegrationTests/Infrastructure/KpiSeedHelper.cs` + `PersonaContextHelper.cs` (JWT issuance for P-01 / P-02 / P-04 / P-07 personas; uses the existing M-10 JWT signing key from the dev env).",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T028",
+    "Parallel": false,
+    "Story": "",
+    "Description": "Create `tests/Nabadat.Portal.E2ETests/Infrastructure/E2ETestBase.cs` — extends `Microsoft.Playwright.MSTest.PageTest`, implements `SignInAsync(persona)` for the portal MFA + `localStorage.session_token` flow; create `tests/Nabadat.Portal.E2ETests/COVERAGE.md` with the empty matrix; create `tests/Nabadat.Portal.E2ETests/Infrastructure/playwright.config.json`.",
+    "Phase": "Phase 2: Foundational (Blocking Prerequisites)"
+  },
+  {
+    "Id": "T029",
+    "Parallel": true,
+    "Story": "US1",
+    "Description": "Unit tests for `KpiCatalogueQuery` in `tests/Nabadat.Platform.M06.UnitTests/Kpis/KpiCatalogueQueryTests.cs` — covers the four spec.md US-1 cases (all + active-only=true, custom + active-only=false, search \"nps\" case-insensitive, whitespace-only search returns all).",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T030",
+    "Parallel": true,
+    "Story": "US1",
+    "Description": "Unit tests for `KpiListItemMapper` in `tests/Nabadat.Platform.M06.UnitTests/Kpis/KpiListItemMapperTests.cs` — covers NPS mapping (`calcMethodLabel=\"NPS Standard\"`, `scaleLabel=\"0–10\"`) AND composite mapping (`scaleLabel=\"—\"`).",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T031",
+    "Parallel": true,
+    "Story": "US1",
+    "Description": "Unit tests for `KpiSeedDataProvider` in `tests/Nabadat.Platform.M06.UnitTests/Kpis/KpiSeedDataProviderTests.cs` — asserts the 8 tuples in canonical order with the right `(short_name, full_name, is_composite, calculation_method)` values; NPS-specific threshold `(x=0, y=30)` per Clarifications session 2026-06-21.",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T032",
+    "Parallel": false,
+    "Story": "US1",
+    "Description": "Run `dotnet test tests/Nabadat.Platform.M06.UnitTests`. Valid red state: compile errors because `KpiCatalogueQuery`, `KpiListItemMapper`, `KpiSeedDataProvider` don't exist yet. Capture the transcript, commit the red baseline (`git commit -m \"test: red baseline for US-1 catalogue units\"`). Non-parallel.",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T033",
+    "Parallel": true,
+    "Story": "US1",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Catalogue/KpiSeedDataProvider.cs` — returns the 8 canonical seeds. (Used by tests; the actual seed runs in the migration.)",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T034",
+    "Parallel": true,
+    "Story": "US1",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Catalogue/KpiListItemMapper.cs` — maps `KpiDefinition` (+ joined `KpiThreshold`) to the list-row DTO with `calcMethodLabel` and `scaleLabel` strings.",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T035",
+    "Parallel": true,
+    "Story": "US1",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Kpis/KpiCatalogueQuery.cs` — composes `type` + `active_only` + `search` (case-insensitive, trimmed) + canonical-order `CASE` expression + `created_at DESC` per [research.md](research.md) R7. Implements cursor-based pagination per R8.",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T036",
+    "Parallel": false,
+    "Story": "US1",
+    "Description": "Create `src/Nabadat.Platform.M06/Api/KpisController.cs` and implement `GET /api/v1/kpis` per [contracts/kpi-api.md](contracts/kpi-api.md). Declares `[RequiredPermission(\"kpis:read\")]`, returns 200 with the cursor-paginated payload.",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T037",
+    "Parallel": true,
+    "Story": "US1",
+    "Description": "Create `frontend/src/features/kpi-management/api.ts` with `listKpis({type, activeOnly, search, cursor, limit})` calling `/api/v1/kpis`. Normalise enum integer-on-wire responses (`kpi_type`, `calculation_method`, `scale`) via shared `normalize<Enum>()` helpers per CLAUDE.md \"Backend Integration\".",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T038",
+    "Parallel": true,
+    "Story": "US1",
+    "Description": "Create `frontend/src/features/kpi-management/hooks/useKpiList.ts` — wraps `listKpis` in a query hook (search + filter local state; query key based on `(type, activeOnly, search)`); exposes `mutateActivation(kpiId, active)` that updates the local cache same-session per FR-008 and SC-011 (no polling, no SSE).",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T039",
+    "Parallel": true,
+    "Story": "US1",
+    "Description": "Create `frontend/src/features/kpi-management/components/ActiveKpiCountSubtitle.tsx` — counts active rows from `useKpiList`, renders the \"[X] Active KPIs\" subtitle per the Nabadat typography rule (page header with `text-2xl font-heading font-bold` title + this caption in `text-sm text-muted-foreground mt-1`).",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T040",
+    "Parallel": true,
+    "Story": "US1",
+    "Description": "Create `frontend/src/features/kpi-management/components/KpiTypeBadge.tsx` — Standard = filled `bg-nb-cyan-100 text-nb-cyan-800` (per design system soft-cyan-tint rule); Custom = outlined Badge using the outline variant (white fill per CLAUDE.md). Strictly NO mint usage.",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T041",
+    "Parallel": false,
+    "Story": "US1",
+    "Description": "Create `frontend/src/features/kpi-management/components/KpiTable.tsx` — uses the shadcn `Table` primitive; sticky header (`sticky top-0 bg-background z-10`); rows are clickable links with `hover:bg-muted/50 transition-colors`; ScaleLabel + CalcMethodLabel cells use `tabular-nums` only for numeric `target`; renders the Type column via `KpiTypeBadge`; the Dashboard column shows the lucide `Check` icon or `—`; the Status column uses a green/grey dot. NO delete control on any row per FR-002.",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T042",
+    "Parallel": false,
+    "Story": "US1",
+    "Description": "Create `frontend/src/features/kpi-management/pages/KpiManagementPage.tsx` — page header (title + `ActiveKpiCountSubtitle` caption + `+ Add KPI` primary button per the one-blue-rule), filter row (Type Select + Active-only Checkbox + Search Input — all 40 px `h-10` per CLAUDE.md control-sizing rule), `KpiTable`. Hidden write controls when persona is P-02 (analyst) per FR-009.",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T043",
+    "Parallel": false,
+    "Story": "US1",
+    "Description": "Wire `/kpi-management` route in `frontend/src/App.tsx` (or router config); add the entry to `frontend/src/components/app-sidebar.tsx`'s `NAV_ITEMS` under the **PLATFORM** category (per CLAUDE.md \"Adding a new page to the sidebar — categorize, don't append\"); add the key to `ROLE_NAV_KEYS` for P-01, P-02, P-06 personas.",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T044",
+    "Parallel": true,
+    "Story": "US1",
+    "Description": "API tests in `tests/Nabadat.Platform.M06.IntegrationTests/Endpoints/GetKpisEndpointTests.cs` — `GET /api/v1/kpis` on a fresh tenant returns 8 rows in canonical order; `?type=Standard&active_only=true` returns the standard active subset; `?search=NPS` filters to NPS only; as P-02 returns 200 (read access); as a persona with no list permission returns 403 with API-05 envelope; **route-table inspection** test asserts NO `DELETE /api/v1/kpis/{id}` route is registered (covers FR-002).",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T045",
+    "Parallel": true,
+    "Story": "US1",
+    "Description": "E2E tests in `tests/Nabadat.Portal.E2ETests/KpiManagementTests.cs` — covers the 8 scenarios from spec.md US-1 E2E Test Coverage (`KpiManagement_lists_eight_standard_kpis_in_canonical_order_when_tenant_is_freshly_provisioned`, `…_filters_by_type_when_user_selects_Standard`, `…_dims_inactive_rows_when_active_only_is_off`, `…_narrows_list_when_user_types_in_search`, `…_navigates_to_config_edit_when_row_is_clicked`, `…_navigates_to_config_create_when_add_kpi_is_clicked`, `…_hides_add_kpi_button_when_user_is_analyst`, `…_redirects_to_login_when_user_is_signed_out`). Update `tests/Nabadat.Portal.E2ETests/COVERAGE.md` with US-1 rows.",
+    "Phase": "Phase 3: User Story 1 - Browse the KPI catalogue (Priority: P1)"
+  },
+  {
+    "Id": "T046",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Unit tests for `KpiDefinitionValidator` in `tests/Nabadat.Platform.M06.UnitTests/Kpis/KpiDefinitionValidatorTests.cs` — covers the spec.md US-2 Required cases (NPS seed valid, threshold-must-be-ascending, short-name duplicate case-insensitive, short-name duplicate trim, slider requires scale 1-3, NPS-standard reserved for NPS, target required when active).",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T047",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Unit tests for `KpiThresholdValidator` in `tests/Nabadat.Platform.M06.UnitTests/Kpis/KpiThresholdValidatorTests.cs` — covers `(0,20,70,100)` Valid, `(0,70,20,100)` Invalid, `(-100,-50,50,100)` for NPS Valid.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T048",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Unit tests for `KpiNormalisationCalculator` in `tests/Nabadat.Platform.M06.UnitTests/Kpis/KpiNormalisationCalculatorTests.cs` — covers Scale1_5(3)=50.0, Scale1_7(7)=100.0, CES(7)=0.0, CES(1)=100.0, FCR(1)=100, FCR(0)=0, NPS(42)=42 passthrough.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T049",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Unit tests for `TopNBoxWarningRule` in `tests/Nabadat.Platform.M06.UnitTests/Kpis/TopNBoxWarningRuleTests.cs` — covers Scale1_7+n=4 warns (4>3), Scale0_10+n=5 no warn (5≤5), Scale1_7+n=7 blocking error (n≥max).",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T050",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Unit tests for `KpiSaveService` in `tests/Nabadat.Platform.M06.UnitTests/Kpis/KpiSaveServiceTests.cs` — covers create-valid (persists 4 tables + 1 event with `action=created`), edit-change-full-name-only (1 event with single-field diff), edit-validation-failure (no rows written + no event). Inject `FakeTimeProvider`.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T051",
+    "Parallel": false,
+    "Story": "US2",
+    "Description": "Run `dotnet test tests/Nabadat.Platform.M06.UnitTests`. Verify red state on the new types. Capture transcript, commit the red baseline. Non-parallel.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T052",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Kpis/KpiNormalisationCalculator.cs` — covers all scales + CES inversion + FCR binary + NPS passthrough per [research.md](research.md) and SRS Section 9.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T053",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Kpis/KpiThresholdValidator.cs`.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T054",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Kpis/TopNBoxWarningRule.cs` (`ShouldWarn(scale, n)` and `IsBlockingError(scale, n)`).",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T055",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Kpis/KpiDefinitionValidator.cs` (FluentValidation) — cross-field rules (slider-requires-1-3, NPS-standard-reserved, target-required-when-active, etc.).",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T056",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Kpis/KpiBindingUsageProbe.cs` — adapter that calls `M-16.IJourneyBindingQuery.GetKpiBindingUsageAsync(kpiId)` and returns the `(touchpointCount, journeyCount)` tuple. Pure delegation; published-interface-only access.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T057",
+    "Parallel": false,
+    "Story": "US2",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Kpis/KpiSaveService.cs` — atomic transaction (validate → upsert KpiDefinition → upsert KpiThreshold → full-replace KpiPerspectives → emit `settings.changed`). Reject Short Name changes on edit (`KPI_SHORT_NAME_IMMUTABLE`) and field locks on standard NPS (`KPI_FIELD_IMMUTABLE_FOR_STANDARD`). Detects scale change against M-16 bindings via `KpiBindingUsageProbe` and rejects without `confirm_structural_change=true` (FR-017, error `KPI_SCALE_CHANGE_AFFECTS_BINDINGS`).",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T058",
+    "Parallel": false,
+    "Story": "US2",
+    "Description": "Implement `IKpiConfigReader` in `src/Nabadat.Platform.M06/Application/KpiConfigReader.cs` — the published interface skeleton from T019 is fleshed out here (returns `GetActiveAsync` + `GetByIdAsync` + `GetByShortNameAsync`).",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T059",
+    "Parallel": false,
+    "Story": "US2",
+    "Description": "Extend `src/Nabadat.Platform.M06/Api/KpisController.cs` with `POST /api/v1/kpis` (Create), `GET /api/v1/kpis/{id}` (Read), `PUT /api/v1/kpis/{id}` (Update with `?confirm_structural_change=true` query param), `GET /api/v1/kpis/{id}/binding-usage` per [contracts/kpi-api.md](contracts/kpi-api.md). All endpoints declare `[RequiredPermission(...)]` and return the API-05 envelope on errors.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T060",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Create `frontend/src/components/cx/kpi/UniversalArcGauge.tsx` — **custom SVG component** per CLAUDE.md \"When to use Recharts vs Custom SVG\" (gauges with zone colouring + needle dots + target markers MUST be custom SVG; never Recharts). Dual-ring semicircle: thick outer ring shows filled value arc; thin inner ring shows three D1→D3→D5 colour bands at the `x` / `y` boundaries; needle dot at current value; target marker (▼) at the Target with \"T\" label; central numeral (large) + Short Name (caption); arc range/labels switch by KPI type (NPS −100..+100 with `−100/−50/0/+50/+100`; others 0..100 with `0/25/50/75/100`); SVG carries `direction: ltr` so numerals stay LTR even on RTL pages (per [research.md](research.md) R11). Wrapped in `React.memo` keyed on `(value, target, x, y, kpiType, shortName)` per R10. Non-colour cue via band labels + target arrow (NFR-4).",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T061",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Create `frontend/src/components/cx/kpi/KpiQuestionPreview.tsx` — renders Number (numbered chips), Stars (lucide Star + Star outline), Emoji (one glyph per K from `EmojiSet` per [research.md](research.md) R2's per-K slot rule), or Slider (only when scale=1-3). Anchor labels beneath the scale carry the Min/Max Scale Descriptions. Logical CSS properties only (`ps-*`, `pe-*`).",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T062",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Create `frontend/src/components/cx/kpi/perfBands.ts` — helper deriving the D-band colour at a value `(value, x, y, lower, upper) → 'd1'|'d2'|'d3'|'d4'|'d5'`. Pure function.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T063",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Create `frontend/src/features/kpi-management/components/ThresholdBandEditor.tsx` — three labeled rows (Unsatisfactory / Average / Satisfactory) with band labels colour-coded via D1–D5 tokens; the `lower`/`upper` columns are read-only display values; integer inputs for `x` and `y` (40 px, `rounded-md`); inline error on `lower < x < y < upper` violations. RTL-aware (`text-start` / `text-end`).",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T064",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Create `frontend/src/features/kpi-management/components/ScaleEndpointDescriptionFields.tsx` — two optional bilingual (EN + AR) text fields (Min / Max Scale Description), ≤60 chars each.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T065",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Create `frontend/src/features/kpi-management/components/PerspectiveChipInput.tsx` — chip/tag input (Enter or comma to add, × to remove), max 10 chips, ≤60 chars each, helper text \"Press Enter or comma to add. Max 10.\"",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T066",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Create `frontend/src/features/kpi-management/components/EmojiSetPreview.tsx` — Emoji Set dropdown listing the two v1 sets `FaceClassic` + `HandThumbs`; live preview of K glyphs for the current scale per [research.md](research.md) R2.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T067",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Create `frontend/src/features/kpi-management/hooks/useKpiDetail.ts` (single-KPI fetch) and `useKpiSave.ts` (POST/PUT with optimistic catalogue update + `BindingUsageConfirmDialog` orchestration — dialog itself comes in US-5).",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T068",
+    "Parallel": false,
+    "Story": "US2",
+    "Description": "Create `frontend/src/features/kpi-management/components/KpiConfigForm.tsx` — assembles all field components in a single `useReducer`-backed form (per [research.md](research.md) R10's <100 ms budget); the entire form state is one object; the preview panel subscribes via React context. Field-by-field handling: Short Name (immutable in edit; greyed + tooltip \"Short name cannot be changed after creation.\"), Full Name, Calculation Method dropdown (with TOP n Box `n` input revealed conditionally; warning + blocking error per FR-014/FR-015), Scale (locked to `0–10 (locked for NPS)` for NPS), Min/Max Scale Description, Representation Style (Slider only when scale=1-3, resets to Number with tooltip if scale moves), Threshold via `ThresholdBandEditor`, Target (range per type), Active checkbox, Show on Dashboard (enabled only when Active=true). Save disabled until all required-field validators pass. Unsaved-changes guard on Cancel/back.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T069",
+    "Parallel": false,
+    "Story": "US2",
+    "Description": "Create `frontend/src/features/kpi-management/pages/KpiConfigPage.tsx` — two-panel layout (form 55% / preview 45%; collapses to stacked on tablet); page header with title (\"New KPI\" in create mode; \"KPI Configuration\" with Full Name as subtitle in edit mode); back arrow with unsaved-changes guard. The preview panel stacks `KpiQuestionPreview` (top card) + `DashboardPreview` (bottom card containing `UniversalArcGauge` plus the surrounding KPI short/full name above, Target caption, sample period delta, sample response count per FR-3.13 / FR-3.14 — for NPS adds the Promoters/Passives/Detractors three-segment breakdown). Read-only mode for P-02 Analyst (FR-009).",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T070",
+    "Parallel": false,
+    "Story": "US2",
+    "Description": "Wire routes `/kpi-management/new` and `/kpi-management/:id` in `frontend/src/App.tsx`; `KpiConfigPage` consumes the path param + the `useKpiDetail` hook.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T071",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Frontend api.ts additions: `createKpi`, `updateKpi`, `getKpi`, `getKpiBindingUsage` in `frontend/src/features/kpi-management/api.ts`; int-converters at the request boundary for enum fields per CLAUDE.md \"Backend Integration\".",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T072",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "API tests in `tests/Nabadat.Platform.M06.IntegrationTests/Endpoints/CreateKpiEndpointTests.cs` — `POST /api/v1/kpis` valid → 201 + row visible + 1 event; duplicate short_name → 400 `KPI_SHORT_NAME_DUPLICATE`; custom KPI with `calculation_method='NPSStandard'` or `='WeightedComposite'` → 400 `KPI_CALCULATION_METHOD_RESERVED`.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T073",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "API tests in `tests/Nabadat.Platform.M06.IntegrationTests/Endpoints/UpdateKpiEndpointTests.cs` — `PUT /api/v1/kpis/{nps_id}` attempting to change short_name → 400 `KPI_SHORT_NAME_IMMUTABLE`; attempting to change scale or calculation_method → 400 `KPI_FIELD_IMMUTABLE_FOR_STANDARD`; scale change on a bound KPI without `confirm_structural_change=true` → 409 `KPI_SCALE_CHANGE_AFFECTS_BINDINGS` carrying `affected_touchpoints` + `affected_journeys`; with the flag → 200.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T074",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "API tests in `tests/Nabadat.Platform.M06.IntegrationTests/Endpoints/BindingUsageEndpointTests.cs` — `GET /api/v1/kpis/{id}/binding-usage` returns `{touchpoint_count, journey_count}` via `IJourneyBindingQuery`.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T075",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Atomicity tests in `tests/Nabadat.Platform.M06.IntegrationTests/Services/KpiSaveAtomicityTests.cs` — induce a perspective insert failure mid-transaction (FK violation or sentinel exception) → no KpiDefinition row, no KpiThreshold row, no KpiPerspective row, no event row in `event_log`.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T076",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "Scenario test in `tests/Nabadat.Platform.M06.IntegrationTests/Scenarios/KpiCreateThenEditScenarioTests.cs` — create QUAL → retrieve → edit Full Name → retrieve and confirm change → assert exactly two `settings.changed` events on `event_log` (`created` + `updated`).",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T077",
+    "Parallel": true,
+    "Story": "US2",
+    "Description": "E2E tests in `tests/Nabadat.Portal.E2ETests/KpiConfigTests.cs` — covers the 15 scenarios from spec.md US-2 E2E Test Coverage (`KpiConfig_creates_custom_kpi_when_form_is_valid_and_saved`, `…_disables_save_when_required_fields_are_empty`, `…_shows_inline_error_when_short_name_is_duplicate`, `…_renders_short_name_read_only_in_edit_mode`, `…_renders_scale_and_method_read_only_for_nps`, `…_reveals_emoji_set_dropdown_when_representation_is_emoji`, `…_resets_representation_to_number_when_scale_leaves_1_3_with_slider_active`, `…_renders_top_n_warning_when_n_exceeds_half_scale_minus_one`, `…_blocks_save_when_top_n_equals_scale_max`, `…_updates_question_preview_within_100ms_of_field_change`, `…_updates_dashboard_gauge_bands_when_threshold_x_or_y_changes`, `…_renders_min_max_scale_descriptions_as_anchor_labels_in_preview`, `…_prompts_unsaved_changes_when_user_navigates_away`, `…_shows_blocking_confirmation_when_scale_changes_on_bound_kpi`, `…_renders_form_read_only_for_analyst`). Verify the <100 ms preview budget via `await expect(page.locator('[data-testid=preview-gauge]')).toHaveAttribute('data-render-tick', /…/)` timing. Update `COVERAGE.md` with US-2 rows. Inherit `E2ETestBase`.",
+    "Phase": "Phase 4: User Story 2 - Create or edit a non-CXI KPI with a live preview (Priority: P1)"
+  },
+  {
+    "Id": "T078",
+    "Parallel": true,
+    "Story": "US3",
+    "Description": "Unit tests for `CxiWeightNormaliser` in `tests/Nabadat.Platform.M06.UnitTests/Cxi/CxiWeightNormaliserTests.cs` — covers `[3,2,1]→[50.0, 33.3, 16.7]` (sum 100±0.1), `[1,1]→[50,50]`, `[]→[]`, `[0,0]→[]`.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T079",
+    "Parallel": true,
+    "Story": "US3",
+    "Description": "Unit tests for `CxiActivationRule` in `tests/Nabadat.Platform.M06.UnitTests/Cxi/CxiActivationRuleTests.cs` — `[]→false`, `[5]→false`, `[1,1]→true`.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T080",
+    "Parallel": true,
+    "Story": "US3",
+    "Description": "Unit tests for `CxiMemberMembershipRule` in `tests/Nabadat.Platform.M06.UnitTests/Cxi/CxiMemberMembershipRuleTests.cs` — `OnKpiDeactivated([nps,csat,ces], csat) → [nps,ces]`; `Add([], CXI_ID) → throws CxiCannotIncludeItself`.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T081",
+    "Parallel": true,
+    "Story": "US3",
+    "Description": "Unit tests for `CxiSnapshotComposer` in `tests/Nabadat.Platform.M06.UnitTests/Cxi/CxiSnapshotComposerTests.cs` — `Compose(composite:78.4, members:[NPS w=3 score=60, CSAT w=2 score=90, CES w=1 score=80]) → {composite:78.4, member_breakdown:[NPS 50.0, CSAT 33.3, CES 16.7]}` with member scores carried through.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T082",
+    "Parallel": false,
+    "Story": "US3",
+    "Description": "Run `dotnet test tests/Nabadat.Platform.M06.UnitTests`. Verify red state. Capture transcript, commit baseline. Non-parallel.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T083",
+    "Parallel": true,
+    "Story": "US3",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Cxi/CxiWeightNormaliser.cs` — relative integers → Effective % rounded to 1 dp, sum = 100±0.1.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T084",
+    "Parallel": true,
+    "Story": "US3",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Cxi/CxiActivationRule.cs` — `CanActivate(weights) ⇔ weights with weight>0 count ≥ 2`.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T085",
+    "Parallel": true,
+    "Story": "US3",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Cxi/CxiMemberMembershipRule.cs` — `OnKpiDeactivated(memberSet, deactivatedId)` returns the filtered set; `Add(memberSet, candidate)` throws `CxiCannotIncludeItself` when `candidate == cxi_kpi_id`.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T086",
+    "Parallel": true,
+    "Story": "US3",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Cxi/CxiSnapshotComposer.cs` — composes the `CxiSnapshotDto` from member scores + weights; rounds Effective % to 1 dp.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T087",
+    "Parallel": false,
+    "Story": "US3",
+    "Description": "Extend `KpisController` with `PUT /api/v1/kpis/{cxi_id}/weights` per [contracts/kpi-api.md](contracts/kpi-api.md). Full-replace semantics; rejects with `CXI_CANNOT_INCLUDE_ITSELF`, `CXI_MEMBER_NOT_ACTIVE`, `CXI_INSUFFICIENT_MEMBERS`, `CXI_WEIGHT_INVALID`; emits one `settings.changed` event with `entity_type=kpi`, `action=updated`, diff carrying the new `cxi_weights` array.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T088",
+    "Parallel": false,
+    "Story": "US3",
+    "Description": "Extend `KpiConfigReader.GetCxiSnapshotAsync` to assemble the snapshot via `CxiSnapshotComposer`.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T089",
+    "Parallel": true,
+    "Story": "US3",
+    "Description": "Create `frontend/src/features/kpi-management/components/CxiWeightsTable.tsx` — lists every currently active non-CXI KPI on the tenant (sourced from `useKpiList({type:'All', activeOnly:true})` filtered); positive-integer weight inputs; live Effective % column computed client-side (mirrors the backend's `CxiWeightNormaliser` for instant feedback — still re-asserted on save); a \"Total\" row at the bottom. Disabled state for the Active checkbox + tooltip \"CXI requires at least 2 active KPIs with assigned weights.\" per FR-043.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T090",
+    "Parallel": false,
+    "Story": "US3",
+    "Description": "Branch `KpiConfigPage` on `is_composite` — when true, hide the Question Preview card (FR-046), hide the Scale + Representation Style fields, render the read-only `Weighted Composite` calculation method, and render `CxiWeightsTable` in the form area. The Dashboard Preview gauge runs 0–100 and shows a proportional weight legend beneath it.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T091",
+    "Parallel": true,
+    "Story": "US3",
+    "Description": "Add `updateCxiWeights(cxiId, weights)` to `frontend/src/features/kpi-management/api.ts`.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T092",
+    "Parallel": true,
+    "Story": "US3",
+    "Description": "API tests in `tests/Nabadat.Platform.M06.IntegrationTests/Endpoints/UpdateCxiWeightsEndpointTests.cs` — valid weights → 200 + 1 event; one non-zero weight → 400 `CXI_INSUFFICIENT_MEMBERS`; `member_kpi_id == cxi_id` → 400 `CXI_CANNOT_INCLUDE_ITSELF`; `PATCH /api/v1/kpis/{csat_id}/activation` Active=false when CSAT is a CXI member → CXI's next read excludes CSAT and recomputes effective %.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T093",
+    "Parallel": true,
+    "Story": "US3",
+    "Description": "Scenario test in `tests/Nabadat.Platform.M06.IntegrationTests/Scenarios/CxiConfiguresAndRebalancesScenarioTests.cs` — configure CXI weights, retrieve snapshot composer's `member_breakdown`, deactivate a member, confirm `member_breakdown` recomputes on next read with the deactivated member removed and remaining proportions sum to 100%.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T094",
+    "Parallel": true,
+    "Story": "US3",
+    "Description": "E2E tests in `tests/Nabadat.Portal.E2ETests/CxiConfigTests.cs` — covers the 7 scenarios from spec.md US-3 E2E Test Coverage (`CxiConfig_hides_question_preview_card`, `…_locks_calculation_method_to_weighted_composite`, `…_renders_weights_table_with_active_non_cxi_kpis_only`, `…_updates_effective_percent_live_when_weights_change`, `…_disables_active_checkbox_when_fewer_than_two_non_zero_weights`, `…_removes_member_row_when_member_kpi_is_deactivated_elsewhere`, `…_renders_weight_legend_beneath_gauge`). Update `COVERAGE.md` with US-3 rows.",
+    "Phase": "Phase 5: User Story 3 - Configure the CXI composite KPI (Priority: P1)"
+  },
+  {
+    "Id": "T095",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "Unit tests for `ScoringConfigValidator` in `tests/Nabadat.Platform.M06.UnitTests/ScoringConfig/ScoringConfigValidatorTests.cs` — covers all the per-field bullets from spec.md US-4 Required cases (alpha boundary, mot boundary, n_floor, flag_percentile, rolling_window).",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T096",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "Unit tests for `AlphaBetaDeriver` in `tests/Nabadat.Platform.M06.UnitTests/ScoringConfig/AlphaBetaDeriverTests.cs` — `Beta(0.500)→0.500`, `Beta(0.700)→0.300`, `Beta(0.123)→0.877` (decimal arithmetic, no IEEE 754 drift).",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T097",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "Unit tests for `ScoringConfigUpdateService` in `tests/Nabadat.Platform.M06.UnitTests/ScoringConfig/ScoringConfigUpdateServiceTests.cs` — valid payload → 1 row + 1 event; no-op save → Idempotent return + no event emitted (asserted negatively).",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T098",
+    "Parallel": false,
+    "Story": "US4",
+    "Description": "Run `dotnet test tests/Nabadat.Platform.M06.UnitTests`. Verify red state. Commit baseline. Non-parallel.",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T099",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/ScoringConfig/ScoringConfigValidator.cs` (FluentValidation).",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T100",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/ScoringConfig/AlphaBetaDeriver.cs` — `Beta(alpha) ⇒ 1.000m - alpha` (decimal arithmetic).",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T101",
+    "Parallel": false,
+    "Story": "US4",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/ScoringConfig/ScoringConfigUpdateService.cs` — calls `M-16.IScoringConfigStore.UpdateAsync` (which is atomic on M-16's side). Idempotent: detects no-change payload by reading current state + emits no event in that case.",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T102",
+    "Parallel": false,
+    "Story": "US4",
+    "Description": "Create `src/Nabadat.Platform.M06/Api/ScoringConfigController.cs` — `GET /api/v1/tenant/scoring-config` returns the DTO with `beta` derived; `PUT /api/v1/tenant/scoring-config` delegates to `ScoringConfigUpdateService`. Permission attributes per [contracts/settings-api.md](contracts/settings-api.md).",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T103",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "Create `frontend/src/features/settings/api.ts` with `getScoringConfig` + `updateScoringConfig`; enum normalisation not needed (numeric primitives only).",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T104",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "Create `frontend/src/features/settings/hooks/useScoringConfig.ts`.",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T105",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "Create `frontend/src/features/settings/components/AlphaBetaSlider.tsx` — single linked slider 0.000–1.000 with 3-dp display; β rendered read-only beside it (large monospaced numeric); updates β within ~100ms of α change. Logical CSS only.",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T106",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "Create `frontend/src/features/settings/components/MotMultiplierSlider.tsx` — slider 1.0–2.0 step 0.1.",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T107",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "Create `frontend/src/features/settings/components/ScoringConfigInfoIcon.tsx` — small \"?\" icon next to each parameter; tooltip carries the EN + AR explanatory copy from spec.md / SRS §12.4.4. Keyboard-focusable + Esc-dismissible per FR-059 / NFR-S1.",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T108",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "Create `frontend/src/features/settings/components/UnsavedChangesGuard.tsx` — generic guard for any Settings section page using the CSS grid-rows trick from CLAUDE.md for the confirmation dialog.",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T109",
+    "Parallel": false,
+    "Story": "US4",
+    "Description": "Create `frontend/src/features/settings/pages/CustomerJourneySettingsPage.tsx` — five-parameter form (α slider + β display, MOT slider, n_floor integer input, flag percentile integer input, rolling window days integer input), each with a `ScoringConfigInfoIcon`. Save button is the page's filled primary; back-to-Settings is secondary. Read-only when persona is P-07 (write controls hidden).",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T110",
+    "Parallel": false,
+    "Story": "US4",
+    "Description": "Create `frontend/src/features/settings/pages/SettingsLandingPage.tsx` — master/detail navigation: lists Organization, Customer Journey, Notifications, Branding Theme, Localization Defaults as `SettingsSectionLink` entries; only the first two are clickable in v1 — the others render as disabled with a small \"coming soon\" annotation.",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T111",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "Create `frontend/src/features/settings/components/SettingsSectionLink.tsx` — single-line entry (icon + name + chevron-end); disabled variant for v1 placeholders.",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T112",
+    "Parallel": false,
+    "Story": "US4",
+    "Description": "Wire routes `/settings` (landing) and `/settings/customer-journey` (section) in `frontend/src/App.tsx`; add the **Settings** entry to `frontend/src/components/app-sidebar.tsx`'s `NAV_ITEMS` under an appropriate category (the **PLATFORM** category is correct per the SRS's Settings note); register the key in `ROLE_NAV_KEYS` for the right personas.",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T113",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "API tests in `tests/Nabadat.Platform.M06.IntegrationTests/Endpoints/ScoringConfigEndpointTests.cs` — `GET` returns defaults on a fresh tenant (200); `PUT` valid → 200 + 1 event; `PUT` with `alpha: 1.5` → 400 `INVALID_ALPHA_BETA_SUM`; `PUT` with `mot_multiplier: 2.5` → 400 `MOT_MULTIPLIER_OUT_OF_RANGE`; as P-07 → 403; as P-04 → 403; as P-01 → 200.",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T114",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "Idempotency test in `tests/Nabadat.Platform.M06.IntegrationTests/Services/ScoringConfigIdempotencyTests.cs` — `PUT` identical payload twice writes exactly one row update and emits exactly one event total (the second is a no-op).",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T115",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "Scenario test in `tests/Nabadat.Platform.M06.IntegrationTests/Scenarios/ScoringConfigEditAndPersistScenarioTests.cs` — read defaults → update three fields → re-read → confirm persisted values → confirm exactly one `journey.scoring_config.updated` event with the three-field diff.",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T116",
+    "Parallel": true,
+    "Story": "US4",
+    "Description": "E2E tests in `tests/Nabadat.Portal.E2ETests/CustomerJourneySettingsTests.cs` — covers the 8 scenarios from spec.md US-4 E2E Test Coverage (`CustomerJourneySettings_shows_defaults_when_tenant_is_freshly_provisioned`, `…_updates_beta_live_when_alpha_slider_moves`, `…_blocks_save_when_mot_is_out_of_range`, `…_blocks_save_when_flag_percentile_is_50`, `…_blocks_save_when_rolling_window_below_7`, `…_renders_tooltip_when_question_icon_focused_or_hovered`, `…_renders_form_read_only_for_it_admin`, `…_prompts_unsaved_changes_when_user_navigates_away`). Update `COVERAGE.md`.",
+    "Phase": "Phase 6: User Story 4 - Configure tenant Customer Journey scoring (Priority: P1)"
+  },
+  {
+    "Id": "T117",
+    "Parallel": true,
+    "Story": "US5",
+    "Description": "Unit tests for `KpiActivationCommandHandler` in `tests/Nabadat.Platform.M06.UnitTests/Kpis/KpiActivationCommandHandlerTests.cs` — covers `(active:false, confirm:false)` + 3 bindings → `RequiresConfirmation{touchpoints:3, journeys:2}` (no write); `(active:false, confirm:true)` + 3 bindings → persists + side-effects applied + exactly ONE event with nested `cxi_side_effect`; `(active:true)` on previously inactive → persists Active=true; does NOT re-create M-16 bindings (asserts no M-16 mutation call was made via NSubstitute).",
+    "Phase": "Phase 7: User Story 5 - Activate or deactivate a KPI with binding-aware confirmation (Priority: P2)"
+  },
+  {
+    "Id": "T118",
+    "Parallel": true,
+    "Story": "US5",
+    "Description": "Unit tests for `KpiDeactivationSideEffects` in `tests/Nabadat.Platform.M06.UnitTests/Kpis/KpiDeactivationSideEffectsTests.cs` — covers Show-on-Dashboard forced to false; no-CXI tenant → no CXI mutation; CXI-member → CXI member list excludes the KPI + effective % recomputed on remaining members.",
+    "Phase": "Phase 7: User Story 5 - Activate or deactivate a KPI with binding-aware confirmation (Priority: P2)"
+  },
+  {
+    "Id": "T119",
+    "Parallel": false,
+    "Story": "US5",
+    "Description": "Run `dotnet test tests/Nabadat.Platform.M06.UnitTests`. Verify red state. Commit baseline. Non-parallel.",
+    "Phase": "Phase 7: User Story 5 - Activate or deactivate a KPI with binding-aware confirmation (Priority: P2)"
+  },
+  {
+    "Id": "T120",
+    "Parallel": true,
+    "Story": "US5",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Kpis/KpiDeactivationSideEffects.cs` — pure function: takes the KPI being deactivated + the tenant's CXI weights snapshot + returns the mutation set (kpi update + cxi_weights deletions + per-CXI recomputed `effective_percentages` payload). Reused by both unit tests and the command handler.",
+    "Phase": "Phase 7: User Story 5 - Activate or deactivate a KPI with binding-aware confirmation (Priority: P2)"
+  },
+  {
+    "Id": "T121",
+    "Parallel": false,
+    "Story": "US5",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Kpis/KpiActivationCommandHandler.cs` — orchestrates the FR-026 flow per [research.md](research.md) R5. Single PostgreSQL transaction: `SELECT FOR UPDATE` on the KPI row, look up CXI memberships, update KPI, delete `cxi_weights` rows, build the nested `cxi_side_effect` payload, INSERT the `event_log` row, COMMIT. Returns `RequiresConfirmation` (with binding-usage counts) on the no-confirm-yet path; persists on the confirm=true path.",
+    "Phase": "Phase 7: User Story 5 - Activate or deactivate a KPI with binding-aware confirmation (Priority: P2)"
+  },
+  {
+    "Id": "T122",
+    "Parallel": false,
+    "Story": "US5",
+    "Description": "Extend `KpisController` with `PATCH /api/v1/kpis/{id}/activation` per [contracts/kpi-api.md](contracts/kpi-api.md) — returns 200 on success, 409 `KPI_DEACTIVATION_REQUIRES_CONFIRMATION` with `{touchpoint_count, journey_count}` body on the no-confirm path.",
+    "Phase": "Phase 7: User Story 5 - Activate or deactivate a KPI with binding-aware confirmation (Priority: P2)"
+  },
+  {
+    "Id": "T123",
+    "Parallel": true,
+    "Story": "US5",
+    "Description": "Create `frontend/src/features/kpi-management/components/BindingUsageConfirmDialog.tsx` — blocking confirmation Dialog showing \"This KPI is bound to N active touchpoints across M journeys. Deactivating excludes it from future scoring. Existing data is preserved. Continue?\" — wired into US-2's `KpiConfigForm` Active toggle and Save flow. On Confirm calls `PATCH /api/v1/kpis/{id}/activation` with `confirm=true`; on Cancel re-enables the form unchanged.",
+    "Phase": "Phase 7: User Story 5 - Activate or deactivate a KPI with binding-aware confirmation (Priority: P2)"
+  },
+  {
+    "Id": "T124",
+    "Parallel": false,
+    "Story": "US5",
+    "Description": "Wire `BindingUsageConfirmDialog` into `KpiConfigForm.tsx` Active toggle behaviour: pre-fetch `/binding-usage` on toggle; if counts > 0, show dialog; otherwise call the activation endpoint directly.",
+    "Phase": "Phase 7: User Story 5 - Activate or deactivate a KPI with binding-aware confirmation (Priority: P2)"
+  },
+  {
+    "Id": "T125",
+    "Parallel": true,
+    "Story": "US5",
+    "Description": "API tests in `tests/Nabadat.Platform.M06.IntegrationTests/Endpoints/ActivateKpiEndpointTests.cs` — `PATCH …/activation` with `active=false` on an unbound KPI → 200 + 1 event; on a bound KPI without `confirm=true` → 409 with body counts; with `confirm=true` → 200 + Show-on-Dashboard forced false + CXI member removed if applicable; without persona perm → 403.",
+    "Phase": "Phase 7: User Story 5 - Activate or deactivate a KPI with binding-aware confirmation (Priority: P2)"
+  },
+  {
+    "Id": "T126",
+    "Parallel": true,
+    "Story": "US5",
+    "Description": "Atomicity + cascade tests in `tests/Nabadat.Platform.M06.IntegrationTests/Services/CxiCascadeAtomicityTests.cs` — deactivate a CXI member with `confirm=true`; assert exactly ONE event row in `event_log` whose payload contains the nested `cxi_side_effect` for the affected CXI; assert the corresponding `cxi_weights` row is deleted; assert CXI's remaining `effective_percentages` sum to 100±0.1 on the next read.",
+    "Phase": "Phase 7: User Story 5 - Activate or deactivate a KPI with binding-aware confirmation (Priority: P2)"
+  },
+  {
+    "Id": "T127",
+    "Parallel": true,
+    "Story": "US5",
+    "Description": "Scenario test in `tests/Nabadat.Platform.M06.IntegrationTests/Scenarios/KpiDeactivationCascadeScenarioTests.cs` — create CXI with NPS+CSAT+CES → deactivate CSAT with `confirm=true` → read CXI → confirm CSAT absent + NPS/CES proportions sum to 100% → confirm exactly ONE `settings.changed` event with `payload->>'action'='deactivated'` and `payload->'cxi_side_effect'` carrying the recomputed map.",
+    "Phase": "Phase 7: User Story 5 - Activate or deactivate a KPI with binding-aware confirmation (Priority: P2)"
+  },
+  {
+    "Id": "T127a",
+    "Parallel": true,
+    "Story": "US5",
+    "Description": "Add E2E methods to `tests/Nabadat.Portal.E2ETests/KpiConfigTests.cs` covering the 3 scenarios from spec.md US-5 E2E Test Coverage (`KpiConfig_shows_deactivation_confirmation_when_active_toggle_off_with_bindings`, `KpiConfig_skips_deactivation_confirmation_when_no_bindings`, `KpiConfig_cascades_show_on_dashboard_off_when_kpi_deactivated`). Use a P-01 persona via `SignInAsync(Persona.CxProgramManager)`. Seed a bound KPI via the integration-test helper (`BindKpiToTouchpointAsync`) before the bound-case scenario. Update `COVERAGE.md` with the three US-5 rows.",
+    "Phase": "Phase 7: User Story 5 - Activate or deactivate a KPI with binding-aware confirmation (Priority: P2)"
+  },
+  {
+    "Id": "T128",
+    "Parallel": true,
+    "Story": "US6",
+    "Description": "Unit tests for `OrganizationSettingsValidator` in `tests/Nabadat.Platform.M06.UnitTests/Organization/OrganizationSettingsValidatorTests.cs` — covers spec.md US-6 Required cases (valid name+industry, empty name → required, 151-char name → too_long, unknown industry → unknown).",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T129",
+    "Parallel": true,
+    "Story": "US6",
+    "Description": "Unit tests for `LogoUploadValidator` in `tests/Nabadat.Platform.M06.UnitTests/Organization/LogoUploadValidatorTests.cs` — valid PNG 500 KB → Valid; PNG 3 MB → Warning(\"logo.size.over_recommended\"); PDF → Invalid(\"logo.content_type.unsupported\").",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T130",
+    "Parallel": true,
+    "Story": "US6",
+    "Description": "Unit tests for `SvgSanitiser` in `tests/Nabadat.Platform.M06.UnitTests/Organization/SvgSanitiserTests.cs` — benign SVG passthrough; `<script>` stripping; `on*` attribute stripping; `<foreignObject>` subtree removal; external-`href` `<use>` removal; non-parseable bytes → throws `SvgUnsafeContentException` (per [research.md](research.md) R1).",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T131",
+    "Parallel": true,
+    "Story": "US6",
+    "Description": "Unit tests for `IndustryEnumProvider` in `tests/Nabadat.Platform.M06.UnitTests/Organization/IndustryEnumProviderTests.cs` — `GetAll()` returns the exact six values in canonical order; returns the same set as the M-11 industry enum (single-source-of-truth assertion).",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T132",
+    "Parallel": false,
+    "Story": "US6",
+    "Description": "Run `dotnet test tests/Nabadat.Platform.M06.UnitTests`. Verify red state. Commit baseline. Non-parallel.",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T133",
+    "Parallel": true,
+    "Story": "US6",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Organization/OrganizationSettingsValidator.cs` (FluentValidation).",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T134",
+    "Parallel": true,
+    "Story": "US6",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Organization/LogoUploadValidator.cs` — content-type check + size check + 0-byte rejection.",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T135",
+    "Parallel": true,
+    "Story": "US6",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Organization/SvgSanitiser.cs` — wraps `Ganss.Xss.HtmlSanitizer` configured per [research.md](research.md) R1 (allow-list of elements and attributes); throws `SvgUnsafeContentException` for non-parseable input.",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T136",
+    "Parallel": false,
+    "Story": "US6",
+    "Description": "Create `src/Nabadat.Platform.M06/Application/Organization/OrganizationSaveService.cs` — orchestrates: validate via `OrganizationSettingsValidator`, call `M-11.IOrganizationSettingsStore.UpdateAsync` (which is atomic on M-11's side + emits the `settings.changed` event), or for logo uploads validate via `LogoUploadValidator` → if SVG run through `SvgSanitiser` → `M-11.ILogoStore.PutAsync` → `M-11.IOrganizationSettingsStore.UpdateLogoRefAsync`.",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T137",
+    "Parallel": false,
+    "Story": "US6",
+    "Description": "Create `src/Nabadat.Platform.M06/Api/OrganizationController.cs` — `GET/PUT /api/v1/tenant/organization` and `POST /api/v1/tenant/organization/logo` (multipart/form-data). Returns `was_sanitised: true` in the logo upload response when the sanitiser stripped any content. Error codes per [contracts/settings-api.md](contracts/settings-api.md).",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T138",
+    "Parallel": true,
+    "Story": "US6",
+    "Description": "Add `getOrganization`, `updateOrganization`, `uploadLogo` to `frontend/src/features/settings/api.ts`.",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T139",
+    "Parallel": true,
+    "Story": "US6",
+    "Description": "Create `frontend/src/features/settings/hooks/useOrganizationSettings.ts`.",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T140",
+    "Parallel": true,
+    "Story": "US6",
+    "Description": "Create `frontend/src/features/settings/components/LogoUploadField.tsx` — file picker accepting PNG/JPG/SVG; preview of the current logo via `<img src={logoUrl}>` (`<img>` rendering protects against inline-SVG XSS as a defence-in-depth on top of the sanitiser); shows \"replace\" control; non-blocking toast (via `sonner`) on `was_sanitised: true` (\"Your SVG was sanitised — disallowed content was removed before saving.\").",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T141",
+    "Parallel": true,
+    "Story": "US6",
+    "Description": "Create `frontend/src/features/settings/components/IndustryDropdown.tsx` — Select populated from `GET /api/v1/tenant/organization` response's `industry_options` field (per [contracts/settings-api.md](contracts/settings-api.md) — no hard-coded enum on the frontend).",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T142",
+    "Parallel": false,
+    "Story": "US6",
+    "Description": "Create `frontend/src/features/settings/pages/OrganizationSettingsPage.tsx` — Name TextField (`Input`, required), `LogoUploadField`, `IndustryDropdown`. Save is the page's filled primary; back-to-Settings is the secondary. Write controls hidden for personas without `organization:update` permission (FR-052).",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T143",
+    "Parallel": false,
+    "Story": "US6",
+    "Description": "Wire route `/settings/organization` in `frontend/src/App.tsx`; ensure it's reachable from the `SettingsLandingPage`.",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T144",
+    "Parallel": true,
+    "Story": "US6",
+    "Description": "API tests in `tests/Nabadat.Platform.M06.IntegrationTests/Endpoints/OrganizationEndpointTests.cs` — `GET` returns seeded defaults; `PUT` valid → 200 + 1 event; empty name → 400 `ORGANIZATION_NAME_REQUIRED`; unknown industry → 400 `ORGANIZATION_INDUSTRY_UNKNOWN`.",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T145",
+    "Parallel": true,
+    "Story": "US6",
+    "Description": "API tests in `tests/Nabadat.Platform.M06.IntegrationTests/Endpoints/LogoUploadEndpointTests.cs` — valid PNG → 200 + new URL; PDF → 400 `LOGO_CONTENT_TYPE_UNSUPPORTED`; benign SVG → 200 + persisted bytes match sanitiser output (byte-compare via re-fetch); SVG with `<script>` → 200 + persisted SVG contains no `<script>` substring; non-parseable SVG → 400 `LOGO_SVG_UNSAFE_CONTENT`.",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T146",
+    "Parallel": true,
+    "Story": "US6",
+    "Description": "E2E tests in `tests/Nabadat.Portal.E2ETests/OrganizationSettingsTests.cs` — covers the 7 scenarios from spec.md US-6 E2E Test Coverage (`OrganizationSettings_shows_current_values_when_user_opens_section`, `…_blocks_save_when_name_is_empty`, `…_uploads_png_logo_when_file_is_valid`, `…_rejects_pdf_logo`, `…_sanitises_svg_logo_when_payload_contains_script_or_event_handlers`, `…_rejects_unparseable_svg_with_logo_svg_unsafe_content`, `…_industry_dropdown_lists_canonical_six_values`, `…_redirects_to_login_when_user_is_signed_out`, `…_renders_form_read_only_for_persona_without_edit_rights`). Update `COVERAGE.md`.",
+    "Phase": "Phase 8: User Story 6 - Configure Organization settings (Priority: P2)"
+  },
+  {
+    "Id": "T147",
+    "Parallel": true,
+    "Story": "US7",
+    "Description": "Persona-permission tests in `tests/Nabadat.Platform.M06.IntegrationTests/Endpoints/AnalystReadOnlyPermissionTests.cs` — as P-02 Analyst: `GET /api/v1/kpis/{id}` → 200; `PUT /api/v1/kpis/{id}` → 403 `PERMISSION_DENIED`; `PATCH /api/v1/kpis/{id}/activation` → 403; `POST /api/v1/kpis` → 403.",
+    "Phase": "Phase 9: User Story 7 - Analyst opens KPI Configuration in read-only mode (Priority: P3)"
+  },
+  {
+    "Id": "T148",
+    "Parallel": true,
+    "Story": "US7",
+    "Description": "Add analyst-only methods to `tests/Nabadat.Portal.E2ETests/KpiConfigTests.cs` (the same file as US-2's E2E) — `KpiConfig_hides_save_button_for_analyst`, `KpiConfig_hides_activation_control_for_analyst`, `KpiConfig_renders_preview_cards_for_analyst`. Use a P-02 persona via `SignInAsync(Persona.Analyst)`. Update `COVERAGE.md` with US-7 rows.",
+    "Phase": "Phase 9: User Story 7 - Analyst opens KPI Configuration in read-only mode (Priority: P3)"
+  },
+  {
+    "Id": "T149",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Scenario test in `tests/Nabadat.Platform.M06.IntegrationTests/Scenarios/KpiCrossTenantIsolationScenarioTests.cs` — Tenant A signs in, queries Tenant B's KPI id via `GET /api/v1/kpis/<id>` → 404 + denial row written to `audit_log` (SC-005 / GP-04 pass condition).",
+    "Phase": "Phase 10: Polish & Cross-Cutting Concerns"
+  },
+  {
+    "Id": "T150",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Update `tests/Nabadat.Portal.E2ETests/COVERAGE.md` with a final matrix mapping every `[TestMethod]` ID to its US scenario + spec.md location reference; verify every spec.md E2E scenario has at least one row.",
+    "Phase": "Phase 10: Polish & Cross-Cutting Concerns"
+  },
+  {
+    "Id": "T151",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Run the full solution: `dotnet test Nabadat.TenantAdmin.sln`. Verify 0 failing tests. Run the full E2E filter against a freshly provisioned tenant per [quickstart.md](quickstart.md) §\"Run the full test suite\".",
+    "Phase": "Phase 10: Polish & Cross-Cutting Concerns"
+  },
+  {
+    "Id": "T152",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Performance audit: open `/kpi-management/:id` for NPS in DevTools, verify gauge re-render < 100 ms on each field change (use the React DevTools Profiler); verify catalogue page first paint < 1.5 s on a 60-KPI tenant.",
+    "Phase": "Phase 10: Polish & Cross-Cutting Concerns"
+  },
+  {
+    "Id": "T153",
+    "Parallel": true,
+    "Story": "",
+    "Description": "Accessibility audit: run axe-core via Playwright against `/kpi-management`, `/kpi-management/new`, `/kpi-management/:id`, `/settings`, `/settings/organization`, `/settings/customer-journey` — assert 0 serious/critical violations (SC-009).",
+    "Phase": "Phase 10: Polish & Cross-Cutting Concerns"
+  },
+  {
+    "Id": "T154",
+    "Parallel": false,
+    "Story": "",
+    "Description": "RTL parity audit: in the portal, toggle `<html dir=\"rtl\" lang=\"ar\">` and walk each page — confirm gauge labels stay LTR (per [research.md](research.md) R11); confirm logical CSS direction utilities (`ps-*`, `me-*`) flip correctly; confirm the threshold-band editor + emoji preview reverse order.",
+    "Phase": "Phase 10: Polish & Cross-Cutting Concerns"
+  },
+  {
+    "Id": "T155",
+    "Parallel": false,
+    "Story": "",
+    "Description": "Run [quickstart.md](quickstart.md) start-to-finish on a fresh tenant — verify every \"Expected\" assertion in the guide passes.",
+    "Phase": "Phase 10: Polish & Cross-Cutting Concerns"
+  },
+  {
+    "Id": "T156",
+    "Parallel": false,
+    "Story": "",
+    "Description": "Commit a final `docs/PR-DESCRIPTION.md` (uncommitted draft used by the eventual PR) summarising the feature scope + clarifications + Constitution Check pass + test results.",
+    "Phase": "Phase 10: Polish & Cross-Cutting Concerns"
+  }
+]

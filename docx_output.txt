@@ -1,0 +1,89 @@
+NABADAT VOC PLATFORM
+Software Requiremets Specificatio
+Customer Jourey Mappig Module (M-16)
+
+Field
+Value
+Versio
+0.5 (Draft)
+Status
+Draft — Nabadat Desig Applied; P25 Cofigurable; Margi of Error Removed
+Author
+CX R&amp;D
+Date
+2026-06-04 (v0.5)
+Module
+M-16 — Customer Jourey Mappig
+Implemetatio Order
+3rd module — after M-11 ad M-10
+Documet Scope
+Chuk 1 of 2 — Feature Spec + Data Model + Scorig Model
+
+1. Itroductio
+1.1 Purpose &amp; Audiece
+This documet specifies the Customer Jourey Mappig Module (M-16) for the Nabadat Voice of Customer (VOC) platform. It is the sigle source of truth for the egieerig, QA, desig, ad product teams buildig this module.
+Audiece: Backed egieers, froted egieers, QA egieers, UX desigers, product maagers, CX cosultats.
+This documet is writte uder the assumptio that the reader has o prior CX domai kowledge. Every CX/VOC term is defied the first time it appears ad cosolidated i the Glossary (Sectio 10).
+Implemetatio cotext: M-16 is the third module to be implemeted o the Nabadat platform, built o top of M-11 (Teat Admiistratio) ad M-10 (User &amp; Role Maagemet). The RBAC primitives, teat isolatio ifrastructure, ad audit loggig established by M-11 ad M-10 are cosumed by this module as foudatioal depedecies.
+1.2 Scope
+I Scope (this documet):
+Persoa cofiguratio (optioal, reusable across joureys)
+Customer jourey cofiguratio (jourey ? stages ? touchpoits)
+Jourey-local touchpoits (all touchpoits created ad owed withi a sigle jourey)
+KPI cofiguratio per touchpoit with weights ad ormalisatio defiitios
+Strategic satisfactio scorig model: touchpoit, stage, ad jourey level (Sectio 3.3 &amp; Sectio 11)
+Teat-cofigurable scorig parameters (a, ß, MOT multiplier, cofidece thresholds)
+Jourey versioig (hybrid major/mior model)
+Pai poit ad happy momet detectio (sigal defiitios ad cofiguratio; computatio delegated to M-06)
+Reportig output defiitios (cosumed by M-07 Dashboards &amp; Reportig)
+Permissios &amp; role-based access for jourey cofiguratio (exteds M-10 RBAC)
+Localizatio (Arabic + Eglish, RTL support)
+Templates, cloig, export
+
+Out of Scope (this documet):
+Survey builder UI (hadled i M-01 Survey ad Form Builder)
+Respose collectio mechaisms (hadled by M-02 Chael Maagemet)
+Text aalytics / verbatim theme detectio algorithms (cosumed as iput from M-05)
+Shared/reusable touchpoit library — all touchpoits are jourey-local i this versio
+Survey-to-Jourey ad Questio-to-Touchpoit bidig (hadled i M-01)
+Score computatio executio (delegated to M-06; this module defies cofiguratio oly)
+Dashboard UI rederig (hadled i M-07 Dashboards &amp; Reportig)
+AI-geerated jourey suggestios (future roadmap)
+Bulk CSV import of joureys (future)
+Real-time collaborative editig of joureys (future)
+1.3 Defiitios &amp; Acroyms
+Selected defiitios used throughout this documet. Full glossary i Sectio 10.
+Term
+Defiitio
+VOC
+Voice of Customer. A structured program to collect, aalyse, ad act o customer feedback.
+Jourey
+A ed-to-ed logical sequece of stages a customer traverses to achieve a goal (e.g., "Apply for a Persoal Loa").
+Stage
+A logical phase withi a jourey (e.g., "Applicatio", "Approval", "Disbursemet").
+Touchpoit (TP)
+A discrete iteractio poit betwee the customer ad the brad withi a stage. All touchpoits are jourey-local i v1.
+Persoa
+A represetative archetype of a customer segmet with shared behaviours ad eeds.
+KPI
+Key Performace Idicator. CX metrics (NPS, CSAT, CES, etc.) cofigured per touchpoit. M-16 ows cofiguratio; M-06 ows computatio.
+NPS
+Net Promoter Score. Customer loyalty metric, -100 to +100.
+CSAT
+Customer Satisfactio Score. Post-iteractio ratig, typically 1–5 or 1–10 scale.
+CES
+Customer Effort Score. Ease-of-iteractio metric, typically 1–7 scale (lower = easier).
+MoT
+Momet of Truth. A touchpoit that disproportioately shapes overall customer perceptio.
+TP_score
+The composite satisfactio score of a touchpoit, derived from its KPI scores weighted by KPI weights.
+Stage_strategic
+The weighted composite satisfactio score for a stage, derived from its touchpoits usig the Strategic Scorig Model (Sectio 11).
+Jourey_strategic
+The weighted composite satisfactio score for a jourey, derived from its stages.
+TP_effective_weight
+The computed weight of a touchpoit i stage scorig, icorporatig TP_weight, customer/busiess importace, MoT multiplier, ad cofidece factor.
+cofidece_factor
+A cotiuous dampeig value (0–1.0) applied to a touchpoit's effective weight based o its respose volume relative to the jourey media. Prevets low-sample touchpoits from distortig scores.
+_TP
+Iteral: KPI-weight-averaged respose cout for a touchpoit. Used oly i cofide

@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Nabadat.IntegrationHub</RootNamespace>
+    <AssemblyName>Nabadat.IntegrationHub</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Module hosts ASP.NET Core controllers (Api/) discovered as an ApplicationPart by the host:
+       the five console controllers plus InboundScenarioController (Feature 0, headless). The
+       framework reference also transitively provides Microsoft.Extensions.Hosting — no separate
+       package pin, so the net10 shared framework version stays authoritative and
+       TreatWarningsAsErrors doesn't trip on NU1605. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <!-- T001: M-13 runtime dependencies.
+       Npgsql EF Core 10 → tenant-schema persistence for the 8 new tables (maps onto
+       IntegrationHub_Baseline.sql; no EF migrations, DB-08). No Elasticsearch package: this module
+       is operational CRUD + request logging, not analytics/dashboard data (AD-04, plan.md
+       Technical Context). Version pin copied from Nabadat.SurveyBuilder.csproj. -->
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+  </ItemGroup>
+
+  <!-- Cross-module dependencies, via direct assembly references (AD-01).
+       - Nabadat.SurveyBuilder → ISurveyRenderService (M-01), the REAL integration behind SCN-03
+         (research.md §4.2; the source SRS mis-labeled this dependency "M-03").
+       - Nabadat.UserManagement → TenantSchemaConnectionInterceptor (M-10), reused for per-request
+         `SET search_path` schema selection (AD-02/DB-01), exactly as M-01/M-06 do. Declared
+         explicitly rather than relied on transitively through M-01 (T012).
+       Acyclic: neither M-01 nor M-10 references M-13. Nabadat.TenantAdmin is deliberately NOT
+       referenced — it is the host and references THIS module, so a reference back would be a project
+       cycle. M-02 (survey resolution/dispatch) and M-04 (response ingestion) do not exist yet and are
+       consumed through M-13-owned ports with Null* default adapters (research.md §4.3/4.4);
+       M-10's data-scope endpoint is reached over HTTP, not by assembly reference (§4.1). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Nabadat.SurveyBuilder\Nabadat.SurveyBuilder.csproj" />
+    <ProjectReference Include="..\Nabadat.UserManagement\Nabadat.UserManagement.csproj" />
+  </ItemGroup>
+
+  <!-- T009: raw-SQL tenant-schema baseline. Copied to the output `Migrations/` folder (and,
+       transitively via the host's project reference, to the host output) so the dev
+       DevTenantSchemaBootstrapper and the integration-test factory can read it from
+       AppContext.BaseDirectory. The source name is already module-prefixed, so no Link rename is
+       needed — unlike M-01, whose canonical `_Baseline.sql` would collide with M-10's in that shared
+       output folder. -->
+  <ItemGroup>
+    <Content Include="Infrastructure\Migrations\IntegrationHub_Baseline.sql"
+             Link="Migrations\IntegrationHub_Baseline.sql"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

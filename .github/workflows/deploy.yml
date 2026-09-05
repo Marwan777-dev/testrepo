@@ -1,0 +1,82 @@
+name: Deploy to SmarterASP
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build Backend
+        run: |
+          dotnet restore src/Nabadat.Platform.M16/Nabadat.Platform.M16.csproj
+          dotnet publish src/Nabadat.Platform.M16/Nabadat.Platform.M16.csproj \
+            --configuration Release \
+            --output ./publish
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+          cd ..
+
+      - name: Copy Frontend Files
+        run: |
+          mkdir -p ./publish/wwwroot
+          cp -r ./frontend/dist/* ./publish/wwwroot/
+
+      - name: Create web.config
+        run: |
+          cat > ./publish/web.config << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <system.webServer>
+              <handlers>
+                <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+              </handlers>
+              <aspNetCore processPath="dotnet"
+                          arguments="Nabadat.Platform.M16.dll"
+                          stdoutLogEnabled="true"
+                          stdoutLogFile=".\logs\stdout"
+                          hostingModel="outofprocess" />
+            </system.webServer>
+          </configuration>
+          EOF
+
+      - name: Upload via FTP
+        run: |
+          sudo apt-get install -y lftp
+          lftp -c "
+            set ftp:ssl-allow yes;
+            set ftp:ssl-force no;
+            set ssl:verify-certificate no;
+            set ftp:use-site-chmod false;
+            set ftp:use-mdtm-overloaded false;
+            set net:timeout 30;
+            set net:max-retries 3;
+            set xfer:clobber true;
+            open ftp://${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}@${{ secrets.FTP_SERVER }};
+            mirror --reverse --delete --verbose --no-perms \
+              ./publish/ \
+              /napadatProduct/;
+            bye
+          "
+
+      - name: Done!
+        if: success()
+        run: echo "✅ Deployed successfully!"

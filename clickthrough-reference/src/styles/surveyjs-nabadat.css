@@ -1,0 +1,129 @@
+/* SurveyJS Creator — Nabadat Design System Overrides
+   Scoped to .nabadat-survey-builder to avoid leaking into global styles */
+
+.nabadat-survey-builder {
+  /* ── Color tokens ─────────────────────────────────── */
+  --sjs-primary-backcolor: #0d8bbc;
+  --sjs-primary-backcolor-light: rgba(13, 139, 188, 0.1);
+  --sjs-primary-backcolor-dark: #0087a8;
+  --sjs-primary-forecolor: #ffffff;
+  --sjs-primary-forecolor-light: rgba(255, 255, 255, 0.7);
+
+  --sjs-secondary-backcolor: #13db9b;
+  --sjs-secondary-backcolor-light: rgba(19, 219, 155, 0.1);
+  --sjs-secondary-backcolor-semi-light: rgba(19, 219, 155, 0.25);
+  --sjs-secondary-forecolor: #ffffff;
+
+  --sjs-base-unit: 8px;
+  --sjs-corner-radius: 12px;
+
+  --sjs-font-family: "Poppins", "IBM Plex Sans Arabic", sans-serif;
+  --sjs-font-size: 14px;
+
+  --sjs-general-backcolor: var(--color-background, #f7f9fc);
+  --sjs-general-backcolor-dark: var(--color-muted, #eef1f7);
+  --sjs-general-backcolor-dim: var(--color-card, #ffffff);
+  --sjs-general-backcolor-dim-light: var(--color-card, #ffffff);
+  --sjs-general-forecolor: var(--color-foreground, #1e2235);
+  --sjs-general-forecolor-light: var(--color-muted-foreground, #7a8196);
+  --sjs-general-dim-forecolor: var(--color-foreground, #1e2235);
+  --sjs-general-dim-forecolor-light: var(--color-muted-foreground, #7a8196);
+
+  --sjs-shadow-small: 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --sjs-shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+  --sjs-shadow-large: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+
+  --sjs-border-light: var(--color-border, #c4cadd);
+  --sjs-border-default: var(--color-border, #c4cadd);
+  --sjs-border-inside: var(--color-border, #c4cadd);
+
+  --sjs-special-red: #c01b2a;
+  --sjs-special-red-light: rgba(192, 27, 42, 0.1);
+  --sjs-special-green: #2eb85c;
+  --sjs-special-green-light: rgba(46, 184, 92, 0.1);
+  --sjs-special-blue: #0d8bbc;
+  --sjs-special-yellow: #e8a020;
+  --sjs-special-yellow-light: rgba(232, 160, 32, 0.1);
+
+  font-family: var(--sjs-font-family);
+}
+
+/* Dark mode overrides */
+.dark .nabadat-survey-builder {
+  --sjs-general-backcolor: var(--color-background, #0a0c11);
+  --sjs-general-backcolor-dark: #1b1c27;
+  --sjs-general-backcolor-dim: #1b1c27;
+  --sjs-general-backcolor-dim-light: #2e3044;
+  --sjs-general-forecolor: #ededef;
+  --sjs-general-forecolor-light: #b8bfce;
+  --sjs-border-light: rgba(30, 34, 53, 0.3);
+  --sjs-border-default: rgba(30, 34, 53, 0.3);
+}
+
+/* ── Remove SurveyJS branding bar bottom padding issue ── */
+.nabadat-survey-builder .svc-creator__banner {
+  opacity: 0.4;
+  font-size: 10px;
+}
+
+/* ── Toolbox ────────────────────────────────────────── */
+.nabadat-survey-builder .svc-toolbox__item {
+  border-radius: 8px;
+  transition: background-color 0.15s;
+}
+
+.nabadat-survey-builder .svc-toolbox__category-header {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── Canvas ─────────────────────────────────────────── */
+.nabadat-survey-builder .svc-question__content {
+  border-radius: 12px;
+  border: 1px solid var(--sjs-border-default);
+  transition: box-shadow 0.15s;
+}
+
+.nabadat-survey-builder .svc-question__content:hover {
+  box-shadow: var(--sjs-shadow-medium);
+}
+
+.nabadat-survey-builder .svc-question__content--selected {
+  border-color: var(--sjs-primary-backcolor);
+  box-shadow: 0 0 0 2px rgba(13, 139, 188, 0.2);
+}
+
+/* ── Buttons ────────────────────────────────────────── */
+.nabadat-survey-builder .sv-action-bar-item {
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+/* ── Page title ─────────────────────────────────────── */
+.nabadat-survey-builder .svc-page__add-new-question {
+  border-radius: 12px;
+  border: 2px dashed var(--sjs-border-default);
+  transition: border-color 0.15s;
+}
+
+.nabadat-survey-builder .svc-page__add-new-question:hover {
+  border-color: var(--sjs-primary-backcolor);
+}
+
+/* ── RTL support ────────────────────────────────────── */
+[dir="rtl"] .nabadat-survey-builder .svc-toolbox {
+  order: -1;
+}
+
+/* ── Full height ────────────────────────────────────── */
+.nabadat-survey-builder,
+.nabadat-survey-builder .svc-creator,
+.nabadat-survey-builder .svc-full-container {
+  height: 100%;
+}
+
+.nabadat-survey-builder .svc-creator__content-wrapper {
+  height: 100%;
+}

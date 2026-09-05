@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SPA fallback — React Router handles routing client-side, so every path
+# must serve index.html (otherwise deep links like /kpi/123 404 on refresh).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,0 +1,70 @@
+name: Auto-create PR on BA push
+
+on:
+  push:
+    branches:
+      - ba-abed
+      - ba-farah
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create or update PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.ref.replace('refs/heads/', '');
+            const baName = branch.replace('ba-', '');
+            const displayName = baName.charAt(0).toUpperCase() + baName.slice(1);
+
+            // Check if PR already exists for this branch
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${branch}`,
+              base: 'master',
+              state: 'open',
+            });
+
+            if (prs.length === 0) {
+              // Create new PR
+              const { data: pr } = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[${displayName}] New page ready for review`,
+                head: branch,
+                base: 'master',
+                body: [
+                  `## ${displayName}'s work is ready for review`,
+                  '',
+                  '### How to review',
+                  '1. Click the **Netlify Deploy Preview** link below to see the live page',
+                  '2. Navigate through the app and verify the new page',
+                  '3. If everything looks good, click **Merge pull request**',
+                  '',
+                  '---',
+                  `> Auto-created from push to \`${branch}\``,
+                ].join('\n'),
+              });
+
+              console.log(`Created PR #${pr.number}: ${pr.html_url}`);
+            } else {
+              // PR already exists — add a comment noting the new push
+              const pr = prs[0];
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: `${displayName} pushed new changes. Check the updated **Netlify Deploy Preview** link above.`,
+              });
+
+              console.log(`PR #${pr.number} already exists, added update comment`);
+            }

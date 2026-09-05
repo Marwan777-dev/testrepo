@@ -1,0 +1,16 @@
+{
+  // Tenant brand-theme seeds keyed by subdomain. primary/secondary/neutral are required;
+  // sidebar/accent/background are optional (omit or null -> the frontend derives them). A
+  // subdomain not listed here falls back to the in-code default (the pinned Nabadat brand).
+  // All values are #RRGGBB hex.
+  "gac": {
+    "primary": "#0E8A3E",
+    "secondary": "#5FB85C",
+    "neutral": "#16241B"
+  },
+  "osbt062023-001-site55": {
+    "primary": "#0E8A3E",
+    "secondary": "#5FB85C",
+    "neutral": "#16241B"
+  }
+}

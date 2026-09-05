@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <!-- Single browser E2E lane for every frontend/ SPA workspace — MSTest + Playwright (official
+       PageTest base for MSTest, per CLAUDE.md E2E Test Policy). Tests are grouped by backend module
+       (KpiManagement, CustomerJourneyManagement, UserManagement, …); each module folder may hold
+       tests that drive different SPAs, so the project carries two harnesses under Infrastructure/
+       (Portal + TenantApp), differing only in their sign-in flow. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="Microsoft.Playwright.MSTest" Version="1.*" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.*" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.*" />
+    <!-- Computes the current TOTP code from a seeded test user's secret during SignInAsync. -->
+    <PackageReference Include="OTP.NET" Version="1.*" />
+    <!-- SC-009 accessibility audit — runs axe-core against the running portal via Playwright. -->
+    <PackageReference Include="Deque.AxeCore.Playwright" Version="4.*" />
+    <!-- The KPI deactivation-confirmation E2E seeds an M-16 kpi_bindings row no portal UI can
+         create (binding is by KPI-type, the probe counts by id) directly via SQL (E2ETenantDb). -->
+    <PackageReference Include="Npgsql" Version="10.*" />
+  </ItemGroup>
+
+  <!-- Gitignored local credentials file (TOTP secret + test users) flows to test output. -->
+  <ItemGroup>
+    <None Include="appsettings.local.json" Condition="Exists('appsettings.local.json')" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+
+</Project>

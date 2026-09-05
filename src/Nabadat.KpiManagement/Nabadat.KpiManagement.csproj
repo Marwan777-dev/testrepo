@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Nabadat.KpiManagement</RootNamespace>
+    <AssemblyName>Nabadat.KpiManagement</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Module hosts ASP.NET Core controllers (Api/) discovered as an ApplicationPart by the host. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <!-- T001: M-06 runtime dependencies. HtmlSanitizer (Ganss.Xss) backs the SVG logo
+       sanitiser (FR-050); FluentValidation backs the KPI/threshold validators. -->
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
+    <PackageReference Include="HtmlSanitizer" Version="8.1.870" />
+  </ItemGroup>
+
+  <!-- The latest STABLE HtmlSanitizer (8.1.870) carries advisory GHSA-j92c-7v7g-gj3f
+       (moderate; the only patched release is the 8.2.871-beta prerelease, not shippable to
+       gov/banking tenants). The flagged path is not reached by M-06's whitelist-based SVG
+       sanitiser config (FR-050 strips script/foreignObject/iframe/use[href]/on*). Suppress
+       this one advisory so TreatWarningsAsErrors stays on for everything else; REVISIT and
+       remove this suppression once a stable patched HtmlSanitizer release is available.
+
+       HtmlSanitizer 8.1.870 also pins AngleSharp [0.17.1] EXACTLY (its HTML/CSS parser), which
+       newly carries advisory GHSA-pgww-w46g-26qg (moderate; a parser resource-exhaustion issue,
+       fixed in AngleSharp 1.x). It cannot be bumped independently — HtmlSanitizer's dependency
+       is a pinned exact version, so a patched AngleSharp only arrives with a future HtmlSanitizer
+       release. The sanitiser only ever parses trusted-authored admin rich text server-side, never
+       attacker-controlled bulk input, so the DoS surface is not reachable here. Suppress with the
+       same REVISIT intent as above. -->
+  <ItemGroup>
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-j92c-7v7g-gj3f" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-pgww-w46g-26qg" />
+  </ItemGroup>
+
+  <!-- Consumes M-10's published interfaces (IPermissionService, M-17 IEventPublisher) via a
+       direct assembly reference, mirroring the M-16 Nabadat.CustomerJourneyManagement template (AD-01). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Nabadat.UserManagement\Nabadat.UserManagement.csproj" />
+    <!-- Consumes M-16's published IJourneyBindingQuery (binding-usage counts for KPI
+         deactivation / scale-change confirmation, FR-017 / FR-026). M-16 does not reference M-06,
+         so this is acyclic. -->
+    <ProjectReference Include="..\Nabadat.CustomerJourneyManagement\Nabadat.CustomerJourneyManagement.csproj" />
+  </ItemGroup>
+
+  <!-- T007: raw-SQL tenant-schema baseline copied to the output `Migrations/` folder so the
+       host's DevTenantSchemaBootstrapper (and the integration-test KpiManagementApplicationFactory,
+       transitively via project reference) can read it from AppContext.BaseDirectory — mirrors
+       src/Nabadat.CustomerJourneyManagement/Migrations/001_customer_journey_baseline.sql. The
+       rollback ships alongside it for manual teardown but is not auto-applied. -->
+  <ItemGroup>
+    <Content Include="Migrations\KpiManagement_Baseline.sql" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Migrations\KpiManagement_Baseline_Rollback.sql" CopyToOutputDirectory="PreserveNewest" />
+    <!-- T008: organization_settings (US-6, M-06-owned, tenant DB) applied per tenant
+         schema by DevTenantSchemaBootstrapper gated by the `organization_settings` sentinel. -->
+    <Content Include="Migrations\KpiManagement_OrganizationSettings.sql" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Migrations\KpiManagement_OrganizationSettings_Rollback.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

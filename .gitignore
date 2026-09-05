@@ -1,0 +1,29 @@
+
+## .NET build output
+bin/
+obj/
+*.user
+*.suo
+
+## Visual Studio / IDE local state
+.vs/
+
+## E2E (Playwright) lane — local secrets & generated artifacts
+tests/*.E2ETests/appsettings.local.json
+tests/**/playwright-artifacts/
+tests/**/TestResults/
+
+## .NET build output
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+artifacts/
+
+## Local runtime logs
+backend-run.log
+
+## clickthrough-parity skill — per-machine app locations (template: reference.example.json)
+.claude/skills/*/reference.json

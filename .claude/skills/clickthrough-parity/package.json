@@ -1,0 +1,9 @@
+{
+  "name": "clickthrough-parity-runner",
+  "private": true,
+  "type": "module",
+  "description": "Playwright runner for the clickthrough-parity skill (capture.mjs). Self-contained so the skill folder carries its own dependency and works with the default `node .claude/skills/clickthrough-parity/capture.mjs` invocation.",
+  "dependencies": {
+    "playwright": "^1.48.0"
+  }
+}

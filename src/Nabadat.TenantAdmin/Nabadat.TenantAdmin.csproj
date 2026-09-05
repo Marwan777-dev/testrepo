@@ -1,0 +1,70 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Nabadat.TenantAdmin</RootNamespace>
+  </PropertyGroup>
+
+  <!-- T009: host references the M-10 module; controllers are registered as ApplicationParts. -->
+  <!-- T006: host references the M-16 module so AddCustomerJourneyManagementModule() resolves and M-16 controllers are discovered as ApplicationParts. -->
+  <!-- T025: host references the M-06 module so AddNabadatKpiManagement() resolves and M-06 controllers (when added) are discovered as ApplicationParts. -->
+  <!-- T006 (feature 004): host references the M-01 module so AddSurveyBuilderModule() resolves and M-01 controllers (when added) are discovered as ApplicationParts. This is the host→module direction; M-01 never references the host (no cycle). -->
+  <!-- T012 (feature 006): same for the M-13 module so AddIntegrationHubModule() resolves and the five console controllers + InboundScenarioController (when added) are discovered as ApplicationParts. Without this reference every M-13 endpoint would 404 and the integration-test WebApplicationFactory<Program> would boot a host with no M-13 services — see TODO-M13-001. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Nabadat.CustomerJourneyManagement\Nabadat.CustomerJourneyManagement.csproj" />
+    <ProjectReference Include="..\Nabadat.KpiManagement\Nabadat.KpiManagement.csproj" />
+    <ProjectReference Include="..\Nabadat.UserManagement\Nabadat.UserManagement.csproj" />
+    <ProjectReference Include="..\Nabadat.SurveyBuilder\Nabadat.SurveyBuilder.csproj" />
+    <ProjectReference Include="..\Nabadat.IntegrationHub\Nabadat.IntegrationHub.csproj" />
+  </ItemGroup>
+
+  <!-- Tenant theming config (subdomain -> brand colors), read by TenantThemeProvider from the
+       content root at runtime. Update (not Include) so it composes with the Web SDK's default
+       .json content glob; copied to the bin + publish output so it ships with the app. -->
+  <ItemGroup>
+    <Content Update="Theming\tenant-themes.json"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Co-launch the frontend (Vite dev server) when running the backend from Visual Studio.
+       Gated to: Debug + a build started inside VS (F5/Ctrl+F5/Build) + not a design-time build,
+       so plain `dotnet build`/CI never spawns it. The script is idempotent (skips if Vite is
+       already running) and starts the server detached, so the build does not hang. -->
+  <Target Name="StartFrontendDevServer"
+          BeforeTargets="Build"
+          Condition="'$(Configuration)' == 'Debug' And '$(BuildingInsideVisualStudio)' == 'true' And '$(DesignTimeBuild)' != 'true'">
+    <Message Importance="high" Text="Co-launching Nabadat frontend dev server (Vite)..." />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\frontend\start-dev.ps1&quot;"
+          ContinueOnError="true" />
+  </Target>
+
+  <!-- Build the frontend and copy the Vite output into wwwroot before publish.
+       Runs only during the publish pipeline (PrepareForPublish is not called by a
+       regular build or the dev-server target above). npm ci is skipped when
+       node_modules already exists to keep incremental publishes fast. -->
+  <PropertyGroup>
+    <FrontendDir>$(MSBuildProjectDirectory)\..\..\frontend</FrontendDir>
+  </PropertyGroup>
+
+  <Target Name="PublishFrontend"
+          BeforeTargets="PrepareForPublish">
+    <Message Importance="high" Text="Building Nabadat frontend for publish..." />
+    <Exec Command="npm ci"
+          WorkingDirectory="$(FrontendDir)"
+          Condition="!Exists('$(FrontendDir)\node_modules')" />
+    <Exec Command="npm run build"
+          WorkingDirectory="$(FrontendDir)" />
+    <ItemGroup>
+      <FrontendDist Include="$(FrontendDir)\dist\**\*" />
+    </ItemGroup>
+    <MakeDir Directories="$(MSBuildProjectDirectory)\wwwroot" />
+    <Copy SourceFiles="@(FrontendDist)"
+          DestinationFiles="@(FrontendDist->'$(MSBuildProjectDirectory)\wwwroot\%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Message Importance="high" Text="Frontend build copied to wwwroot." />
+  </Target>
+
+</Project>
