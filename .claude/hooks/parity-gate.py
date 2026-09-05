@@ -144,6 +144,40 @@ def main():
     if not any(targets_release_branch(tokens) for tokens in segments):
         allow()
 
+    # Delegate to the shared verifier so this hook, the .githooks/pre-push hook, and CI all apply
+    # the SAME rules: the module is resolved from the changed files (not "newest spec folder"),
+    # and staleness is scoped to that module's own pages (not all of frontend/src).
+    verifier = os.path.join(
+        REPO, ".claude", "skills", "clickthrough-parity", "verify-stamps.py"
+    )
+    if os.path.isfile(verifier):
+        base = None
+        for candidate in ("@{upstream}", "origin/HEAD"):
+            probe = git("rev-parse", "--verify", "--quiet", candidate)
+            if probe and probe.returncode == 0 and probe.stdout.strip():
+                base = probe.stdout.strip()
+                break
+        if base is None:
+            empty = git("hash-object", "-t", "tree", os.devnull)
+            base = empty.stdout.strip() if empty and empty.returncode == 0 else None
+        if base:
+            result = subprocess.run(
+                [sys.executable, verifier, "--base", base, "--head", "HEAD"],
+                capture_output=True, text=True, timeout=60,
+            )
+            if result.returncode == 0:
+                allow()
+            deny(
+                "Push to main/master blocked — click-through parity.\n\n"
+                + (result.stdout or result.stderr).strip()
+                + "\n\nRun the audit first, in Claude Code:\n"
+                  "    /clickthrough-parity <module>      (bare feature, NO phase)\n\n"
+                "Then commit the stamp it writes under\n"
+                "    .claude/skills/clickthrough-parity/audits/\n"
+                "and push again."
+            )
+
+    # Fallback: the verifier is absent (older checkout) — use the original resolution.
     feature = resolve_feature()
     if feature is None or not page_bearing(feature):
         allow()   # backend-only module (or no spec resolvable) — nothing to compare
