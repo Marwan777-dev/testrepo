@@ -1,0 +1,61 @@
+# Click-through parity — the ENFORCEMENT half of the gate.
+#
+# This workflow does NOT run a parity audit and cannot: the audit needs the private click-through
+# checkout, two live authenticated servers, and a model reading screenshots to judge layout, text,
+# controls and behaviour. There is no headless assertion for that. It stays a local
+# `/clickthrough-parity <feature>` run.
+#
+# What CI can do is check the receipt that run leaves behind — `audits/<feature>.json`, a committed
+# file pinning the audited commit. So the split is:
+#
+#     /clickthrough-parity  produces the stamp   (local, human + model, stack up)
+#     this workflow         verifies the stamp   (anywhere, headless)
+#
+# It covers the one path the local `parity-gate.py` hook cannot reach: a PR merged through the
+# GitHub UI, which never runs a shell command on anyone's machine.
+#
+# To make it binding: Settings → Branches → protect `main` → Require status checks → select
+# "verify parity stamps". Without that, this reports but does not block.
+name: Click-through parity
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+jobs:
+  verify:
+    name: verify parity stamps
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # REQUIRED. The stamp pins a commit SHA and the check resolves it with `git cat-file`;
+          # a shallow clone would not contain it and every module would fail as "not in this
+          # history" rather than on its actual merits.
+          fetch-depth: 0
+
+      - name: Resolve the comparison base
+        id: base
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base="${{ github.event.before }}"
+            # A branch's first push reports an all-zero "before"; compare against the empty tree
+            # so the whole tree counts as changed rather than the step erroring out.
+            case "$base" in
+              0000000000000000000000000000000000000000|"")
+                base=$(git hash-object -t tree /dev/null) ;;
+            esac
+          fi
+          echo "sha=$base" >> "$GITHUB_OUTPUT"
+          echo "Comparing $base..${{ github.sha }}"
+
+      - name: Verify every touched module has a current whole-module audit
+        run: |
+          python3 .claude/skills/clickthrough-parity/verify-stamps.py \
+            --base "${{ steps.base.outputs.sha }}" \
+            --head "${{ github.sha }}"
