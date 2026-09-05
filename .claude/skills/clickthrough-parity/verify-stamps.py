@@ -137,12 +137,23 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", required=True, help="Merge base / previous ref")
     parser.add_argument("--head", default="HEAD", help="Ref being promoted (default HEAD)")
+    parser.add_argument(
+        "--list-failing", action="store_true",
+        help="Print only the feature folders needing an audit, one per line, and exit 0. "
+             "For the pre-push hook, which then runs the audit for each.",
+    )
     args = parser.parse_args()
+
+    quiet = args.list_failing
+
+    def say(*parts):
+        if not quiet:
+            print(*parts)
 
     changed = changed_frontend_files(args.base, args.head)
     if not changed:
-        print("parity: no frontend/src changes in %s..%s — nothing to audit."
-              % (args.base, args.head))
+        say("parity: no frontend/src changes in %s..%s — nothing to audit."
+            % (args.base, args.head))
         return 0
 
     owners = owned_paths_by_feature()
@@ -158,29 +169,33 @@ def main():
 
     unspecced = [f for f, owned in owners.items() if owned is None]
     if unspecced:
-        print("parity: WARNING — no tasks.md, so ownership is unknown for: %s"
-              % ", ".join(unspecced))
+        say("parity: WARNING — no tasks.md, so ownership is unknown for: %s"
+            % ", ".join(unspecced))
 
     shared = sorted(set(changed) - attributed)
     if shared:
-        print("parity: %d shared/unattributed frontend file(s) changed (not owned by any spec's "
-              "tasks.md):" % len(shared))
+        say("parity: %d shared/unattributed frontend file(s) changed (not owned by any spec's "
+            "tasks.md):" % len(shared))
         for f in shared[:10]:
-            print("    %s" % f)
-        print("    These are cross-cutting; no single module's audit covers them.")
+            say("    %s" % f)
+        say("    These are cross-cutting; no single module's audit covers them.")
 
     if not in_scope:
-        print("parity: no module's own pages changed — nothing to verify.")
+        say("parity: no module's own pages changed — nothing to verify.")
         return 0
 
-    print("parity: modules in scope — %s" % ", ".join(sorted(in_scope)))
-    failures = [msg for msg in
-                (check_stamp(f, owned, args.head) for f, owned in sorted(in_scope.items()))
-                if msg]
+    say("parity: modules in scope — %s" % ", ".join(sorted(in_scope)))
+    results = [(f, check_stamp(f, owned, args.head)) for f, owned in sorted(in_scope.items())]
+    failures = [(f, msg) for f, msg in results if msg]
+
+    if args.list_failing:
+        for feature, _ in failures:
+            print(feature)
+        return 0
 
     if failures:
         print("\nClick-through parity check FAILED:\n")
-        for msg in failures:
+        for _, msg in failures:
             print("  * %s\n" % msg)
         print("The audit itself cannot run here — it needs the click-through checkout and a live\n"
               "signed-in stack. Run it locally, commit the stamp, and push again.")

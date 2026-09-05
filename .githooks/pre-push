@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# Run the click-through parity audit before a push reaches main/master.
+#
+# Unlike .claude/hooks/parity-gate.py (which only fires for pushes Claude itself runs), this is a
+# real git hook: it catches `git push` typed in any terminal, by any developer.
+#
+# What it does, in order:
+#   1. Ignore every push that is not targeting main/master.
+#   2. Ask verify-stamps.py which modules the push changes AND lack a current audit.
+#   3. For each, run `/clickthrough-parity <module>` headlessly via the Claude CLI — the real
+#      comparison against the click-through, which needs both dev servers up.
+#   4. Re-verify. Allow the push only if every module now has a current stamp.
+#
+# Escape hatches:
+#   PARITY_SKIP=1 git push ...   skip entirely (hotfix; you own the consequence)
+#   PARITY_CHECK_ONLY=1          verify stamps but never auto-run the audit (fast; CI still gates)
+#
+# Install (once per clone):  git config core.hooksPath .githooks
+
+set -uo pipefail
+
+REPO="$(git rev-parse --show-toplevel)"
+SKILL="$REPO/.claude/skills/clickthrough-parity"
+VERIFY="$SKILL/verify-stamps.py"
+REF_JSON="$SKILL/reference.json"
+EMPTY_TREE="$(git hash-object -t tree /dev/null)"
+
+if [ "${PARITY_SKIP:-0}" = "1" ]; then
+  echo "parity: SKIPPED via PARITY_SKIP=1 — this push is not audited." >&2
+  exit 0
+fi
+
+# ---------------------------------------------------------------- 1. targeting main/master?
+# git feeds us: <local ref> <local sha> <remote ref> <remote sha>, one line per ref being pushed.
+target_sha=""
+while read -r _local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main|refs/heads/master) ;;
+    *) continue ;;
+  esac
+  [ "$local_sha" = "0000000000000000000000000000000000000000" ] && continue   # branch deletion
+  target_sha="$local_sha"
+  base_sha="$remote_sha"
+done
+
+[ -z "$target_sha" ] && exit 0   # nothing headed for a release branch
+
+case "$base_sha" in
+  0000000000000000000000000000000000000000|"") base_sha="$EMPTY_TREE" ;;
+esac
+
+[ -f "$VERIFY" ] || { echo "parity: $VERIFY missing — cannot verify. Push refused." >&2; exit 1; }
+
+echo "parity: checking $base_sha..$target_sha for unaudited modules…" >&2
+failing="$(python3 "$VERIFY" --base "$base_sha" --head "$target_sha" --list-failing 2>/dev/null)"
+
+if [ -z "$failing" ]; then
+  echo "parity: OK — every module whose pages changed has a current audit." >&2
+  exit 0
+fi
+
+echo "parity: these modules need a whole-module audit:" >&2
+echo "$failing" | sed 's/^/  - /' >&2
+
+if [ "${PARITY_CHECK_ONLY:-0}" = "1" ]; then
+  echo "parity: PARITY_CHECK_ONLY=1 — not auto-running. Push refused." >&2
+  exit 1
+fi
+
+# ---------------------------------------------------------------- 2. preflight the audit's needs
+command -v claude >/dev/null 2>&1 || {
+  echo "parity: the 'claude' CLI is not on PATH, so the audit cannot run here." >&2
+  echo "        Run it in Claude Code:  /clickthrough-parity <module>" >&2
+  exit 1
+}
+[ -f "$REF_JSON" ] || {
+  echo "parity: $REF_JSON missing — the skill would not know where the click-through is." >&2
+  echo "        Copy reference.example.json to reference.json and set your paths." >&2
+  exit 1
+}
+
+# Both servers must answer, or the audit burns minutes and then fails on a blank page.
+for key in clickthroughBaseUrl frontendBaseUrl; do
+  url="$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['$key'])" "$REF_JSON")"
+  code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$url" || echo 000)"
+  if [ "$code" = "000" ]; then
+    echo "parity: $key ($url) is not responding." >&2
+    echo "        Start both the click-through and the product frontend, then push again." >&2
+    echo "        (Or push with PARITY_CHECK_ONLY=1 and audit later — CI will still block the PR.)" >&2
+    exit 1
+  fi
+  echo "parity: $key $url -> $code" >&2
+done
+
+# ---------------------------------------------------------------- 3. run the audit per module
+# Interactive, not -p: the audit triages defects with you and the run is long. A headless -p run
+# would decide unattended what to --fix, which is exactly the call the frontend lead must make.
+echo "$failing" | while read -r feature; do
+  [ -z "$feature" ] && continue
+  echo "parity: running /clickthrough-parity $feature …" >&2
+  claude "/clickthrough-parity $feature" < /dev/tty > /dev/tty 2>&1 || {
+    echo "parity: the audit for $feature did not complete." >&2
+    exit 1
+  }
+done
+
+# ---------------------------------------------------------------- 4. re-verify
+echo "parity: re-checking stamps…" >&2
+if python3 "$VERIFY" --base "$base_sha" --head "$target_sha" >&2; then
+  echo "parity: OK — proceeding with the push." >&2
+  exit 0
+fi
+
+cat >&2 <<'EOF'
+
+parity: still unaudited after the run — push refused.
+        Most likely the stamp was written but not committed. Check:
+            git status .claude/skills/clickthrough-parity/audits/
+        Commit it, then push again.
+EOF
+exit 1
