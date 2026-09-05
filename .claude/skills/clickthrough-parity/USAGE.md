@@ -567,7 +567,20 @@ cd <clickthroughDir> && npm install && npm run dev -- --port 4000 --strictPort
 # 4. E2E credentials (gitignored) — the example already carries the dev-seeded values
 cp tests/Nabadat.E2ETests/appsettings.local.json.example \
    tests/Nabadat.E2ETests/appsettings.local.json
+
+# 5. Your machine's paths for the skill (gitignored — yours only)
+cp .claude/skills/clickthrough-parity/reference.example.json \
+   .claude/skills/clickthrough-parity/reference.json
+#    then set clickthroughDir, clickthroughBaseUrl, frontendBaseUrl, persona
+
+# 6. The pre-push gate. `.git/hooks/` is not version-controlled, so each clone opts in once.
+#    Without this, a push to main/master is not audited locally — only the PR check catches it.
+git config core.hooksPath .githooks
 ```
+
+**When to do this:** only before you first *run* an audit or do real frontend work.
+`/speckit-specify`, `/speckit-plan`, and `/speckit-tasks` write text and need none of it —
+a teammate generating tasks.md can skip steps 1–6 entirely.
 
 Then smoke-test with the cheapest run — one route, report mode. With `reference.json` in place the
 trailing path lines are optional:

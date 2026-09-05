@@ -1,124 +1,127 @@
 # Tasks: M-13 Integration Hub
 
-**Input**: Design documents from `/specs/006-integration-hub/`
+**Input**: Design documents from `specs/006-integration-hub/`
 
-**Prerequisites**: [plan.md](./plan.md) · [spec.md](./spec.md) · [research.md](./research.md) · [data-model.md](./data-model.md) · [contracts/](./contracts/) · [coordination-log.md](./coordination-log.md)
+**Prerequisites**: plan.md ✅, spec.md ✅, research.md ✅, data-model.md ✅, contracts/ ✅, quickstart.md ✅
 
-**Team**: AbuKr (backend, solo) · Marwan (frontend, solo) — research.md §1 mandates strictly-sequential backend ordering.
+**Team**: 2 resources — **AbuKr** (backend, solo) and **Marwan** (frontend, solo). Backend work is
+strictly sequential (research.md §1); the frontend story of a phase can run in parallel with the
+next phase's backend work once its API contract is fixed.
 
----
+**Tests**: Per CLAUDE.md "Unit Test Policy", unit tests are MANDATORY for every backend-bearing
+story here — **no story in this feature declares `unit-tests: skipped`**, and every story ships
+backend units. Each backend story emits **Unit Tests (write FIRST, must FAIL)** → **Red
+Checkpoint** → **Implementation** → **Integration & API / Scenario tests**. Nine of the ten
+stories are page-bearing and additionally emit **E2E (Browser) Tests 🎭** after their page tasks
+(no Red Checkpoint) and a **Click-through Parity 🎨** task after the checkpoint. **US4 declares
+`e2e-tests: skipped`** (headless Feature 0, no console screen) — it gets no E2E and no parity
+subsection.
 
-> ## ⚠️ Reconstruction notice — read before using task IDs
->
-> **This file was regenerated on 2026-09-03 after the original `tasks.md` was lost.** It did not
-> exist in `specs/006-integration-hub/` when `/speckit-tasks` ran, and the repo has no `.git`
-> directory to recover it from. The original spanned **T001–T218** and is cross-referenced by
-> `IMPLEMENTATION.md`, `TODO.md`, `coordination-log.md`, and past commit messages.
->
-> **What is preserved verbatim** (IDs re-anchored from those surviving records, so every existing
-> cross-reference still resolves):
-> `T001` (module csproj) · `T003` (integration-test project) · `T004` (solution registration) ·
-> `T006` (M-01 project reference) · `T009` (`IntegrationHub_Baseline.sql`) · `T011`
-> (`ITenantDbContext`) · `T012` (`AddIntegrationHubModule`) · `T018`
-> (`IntegrationHubApplicationFactory`) · `T020` (stub-port host wiring) · `T021` (sidebar nav) ·
-> `T035` (first M-13 endpoint) · `T037` (`ServiceChannelForm.tsx`) · `T041`
-> (`ServiceChannelsEndpointTests`) · `T042` (E2E `ServiceChannelTests`) · **`T043`–`T067`** (the
-> entire US2 phase, pinned task-by-task by `IMPLEMENTATION.md`) · `T085` (SCR-02 wizard) · `T147`
-> (FR-GBL-05 read-only rendering) · `T148` (FR-GBL-02 access-denied) · `T218` (final task).
->
-> **What is a reconstruction**: every *other* ID. The surviving records do not pin them, so the
-> descriptions here are derived from spec.md + plan.md + the code actually on disk. If an old
-> commit message or note references an ID not in the list above, verify it against this file
-> before trusting it.
->
-> **Completion state (`[X]`) is derived from the working tree**, not from a task log — a file
-> existing on disk is the evidence. Two consequences: (a) Red Checkpoints, which leave no artifact,
-> are marked `[X]` only where `IMPLEMENTATION.md` records the run; (b) if a task was completed and
-> later reverted, re-verify rather than trusting the checkbox.
->
-> **Current state**: Phases 1–4 complete (Setup, Foundational, US1, US2 — backend + frontend + E2E,
-> all green per `tests/Nabadat.E2ETests/COVERAGE.md`). Phase 5 (US3) has its **unit tests written**
-> (`tests/Nabadat.IntegrationHub.UnitTests/Integrations/`, 827 lines across 6 files) but **no
-> production code** — `src/Nabadat.IntegrationHub/Application/Integrations/` does not exist. US4–US10
-> are not started.
-
----
-
-**Tests**: Per CLAUDE.md "Unit Test Policy", unit tests are MANDATORY for every backend-bearing user
-story here — spec.md declares no `unit-tests: skipped` for any of the ten. Each backend story emits
-**Unit Tests (write FIRST, must FAIL)** → **Red Checkpoint** → **Implementation** → **Integration &
-API / Scenario tests**. Page-bearing frontend stories add **E2E (Browser) Tests** after the page
-tasks (no Red Checkpoint), then a **Click-through Parity** task run by hand. **US4 (Feature 0)
-declares `e2e-tests: skipped`** — it is headless, with no browser flow.
-
-**Organization**: Grouped by user story so each is independently implementable and testable.
+**Organization**: Tasks are grouped by user story so each story can be implemented, tested, and
+demoed independently.
 
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: `US1`…`US10` per spec.md
-- Exact file paths in every description
+- **[Story]**: Which user story this task belongs to (US1…US10)
+- Every task carries an exact file path
 
 ## Path Conventions
 
-- Backend module: `src/Nabadat.IntegrationHub/` (constitution AMENDMENT-009 / Article 1A layout)
-- Unit tests: `tests/Nabadat.IntegrationHub.UnitTests/<SubDomain>/`
-- Integration tests: `tests/Nabadat.IntegrationHub.IntegrationTests/{Infrastructure,Endpoints,Services,Scenarios}/`
-- E2E: `tests/Nabadat.E2ETests/IntegrationHub/` (shared project — no new E2E project)
-- Frontend: `frontend/src/features/integration-hub/{api.ts,components/,hooks/,pages/}`
+- **Backend module**: `src/Nabadat.IntegrationHub/` — constitution AMENDMENT-009 / architecture
+  Article 1A layout (`Api/`, `Application/<SubDomain>/`, `Domain/`, `Infrastructure/`), hosted
+  inside the existing `Nabadat.TenantAdmin` process (AD-01).
+- **Unit tests**: `tests/Nabadat.IntegrationHub.UnitTests/<SubDomain>/<Type>Tests.cs`
+- **Integration tests**: `tests/Nabadat.IntegrationHub.IntegrationTests/{Infrastructure,Endpoints,Services,Scenarios}/`
+- **E2E tests**: `tests/Nabadat.E2ETests/IntegrationHub/` — **appended to the existing shared E2E
+  project**, no new project (CLAUDE.md E2E Test Policy rule 1).
+- **Frontend**: `frontend/src/features/integration-hub/{components,hooks,pages}/`
 
 ## Frontend Task Rule
 
-Before any UI task, read the repo-root `CLAUDE.md` end to end (design system, tokens, RTL logical
-properties, D1–D5 Two-Palette Rule, DO / DO NOT) and follow the **Component Sourcing Rule** — search
-`frontend/src/components/{ui,cx}/` and reuse before building. Per plan.md's Frontend Design Gate,
-**this feature needs zero new custom-SVG components**; all eight screens build from existing shadcn
-primitives. Implementation is **click-through-blind** (see the Click-through Parity subsections).
+Before any UI task the agent MUST read the repo-root `CLAUDE.md` end to end (design system,
+tokens, RTL logical properties, D1–D5 Two-Palette Rule, button hierarchy, DO / DO NOT) and follow
+the **Component Sourcing Rule** — search `frontend/src/components/` (`ui/`, `cx/`) and reuse what
+exists before building anything. Per plan.md's Frontend Design Gate this feature needs **zero new
+custom-SVG components**: all eight screens build from existing shadcn primitives (`Table`,
+`Dialog`, `Sheet`, `TabsListSegmented`, `Badge`, `Select`, `WizardStepper`).
+
+**Click-through-blind (HARD RULE)**: build every page from `spec.md` + this design system.
+**Never open, read, or copy from the click-through checkout while implementing** — a ported page
+makes its parity run VOID (reported `NOT AUDITED`), not clean.
+
+## Backend Module Folder Structure Rule
+
+File paths land in the canonical layout only: controllers/DTOs → `Api/{Controllers,Contracts}/`;
+use-case + data-access services → `Application/<SubDomain>/` with ports in
+`Application/<SubDomain>/Interfaces/`; entities/value objects/published interfaces →
+`Domain/{Entities,ValueObjects,Interfaces}/`; DbContext + `IEntityTypeConfiguration<T>` +
+`_Baseline.sql` → `Infrastructure/Persistence/` + `Infrastructure/Migrations/`; every external
+adapter → a `Infrastructure/<Concern>/` folder named for what it wraps. One type per file.
+
+## Backend Data-Access Task Rule
+
+Persistence follows DB-08 / database-constitution Article 7 (EF Core, M-10 reference pattern):
+entity + `IEntityTypeConfiguration<T>` with explicit `HasColumnName`, tables added to
+`IntegrationHub_Baseline.sql` — **never an EF migration**; data-access service + port (the unit
+test mock seam); business service depending on the port, wrapping multi-write atomicity in
+`ITenantDbContext.ExecuteAsync`, taking the clock via injected `TimeProvider`. Real Postgres
+lives only in the IntegrationTests lane.
 
 ---
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Project skeletons and solution registration.
+**Purpose**: Create the module skeleton and its three test lanes.
 
-- [X] T001 Create the `src/Nabadat.IntegrationHub/` class library (`net10.0`) with `Nabadat.IntegrationHub.csproj`
-- [X] T002 [P] Create `tests/Nabadat.IntegrationHub.UnitTests/` (xUnit v3, FluentAssertions 6.12.*, NSubstitute 5.*, `Microsoft.Extensions.TimeProvider.Testing` 9.*) per CLAUDE.md rule 14
-- [X] T003 [P] Create `tests/Nabadat.IntegrationHub.IntegrationTests/` (xUnit v3, `Testcontainers.PostgreSql` 4.*, `Microsoft.AspNetCore.Mvc.Testing` 10.*) with a project reference to `Nabadat.IntegrationHub`
-- [X] T004 Register all three projects in `Nabadat.TenantAdmin.sln`
-- [X] T005 [P] Create `tests/Nabadat.E2ETests/IntegrationHub/` and add the `IntegrationHub/` section + ID block (`M13-E2E-*`) to `tests/Nabadat.E2ETests/COVERAGE.md`
+- [ ] T001 Create the backend module project `src/Nabadat.IntegrationHub/Nabadat.IntegrationHub.csproj` (`net10.0`) with a project reference to `src/Nabadat.SurveyBuilder/Nabadat.SurveyBuilder.csproj` (the REAL `ISurveyRenderService` call, research.md §4.2), and register it in `Nabadat.TenantAdmin.sln`
+- [ ] T002 Create the composition root `src/Nabadat.IntegrationHub/IntegrationHubServiceCollectionExtensions.cs` exposing `AddIntegrationHubModule(this IServiceCollection, IConfiguration)`, and call it from `src/Nabadat.TenantAdmin/Program.cs` (AD-01 single-runtime hosting)
+- [ ] T003 [P] Create `tests/Nabadat.IntegrationHub.UnitTests/Nabadat.IntegrationHub.UnitTests.csproj` — xUnit v3 `1.*`, `xunit.runner.visualstudio` `3.*`, FluentAssertions **pinned `6.12.*`**, NSubstitute `5.*`, `Microsoft.Extensions.TimeProvider.Testing` `9.*`; register in the solution
+- [ ] T004 [P] Create `tests/Nabadat.IntegrationHub.IntegrationTests/Nabadat.IntegrationHub.IntegrationTests.csproj` — same xUnit/FluentAssertions/NSubstitute pins plus `Testcontainers.PostgreSql` `4.*` and `Microsoft.AspNetCore.Mvc.Testing` `10.*`; register in the solution
+- [ ] T005 [P] Add `ClosedXML` to `src/Nabadat.IntegrationHub/Nabadat.IntegrationHub.csproj` for SCR-07's Excel import/export (VR-F09, plan.md Primary Dependencies)
+- [ ] T006 [P] Create the E2E folder `tests/Nabadat.E2ETests/IntegrationHub/` and add an `Integration Hub (M-13)` section to `tests/Nabadat.E2ETests/COVERAGE.md` — **no new E2E project**; the existing `Infrastructure/E2ETestBase.cs` harness is reused as-is
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Module wiring, schema, cross-module ports, and the frontend shell that every user story
-depends on.
+**Purpose**: The eight tables, the EF context, the module's DI wiring, the cross-module ports, and
+the frontend feature shell — everything every user story depends on.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [X] T006 Add a `ProjectReference` to `src/Nabadat.SurveyBuilder/Nabadat.SurveyBuilder.csproj` from `Nabadat.IntegrationHub.csproj` — the real M-01 `ISurveyRenderService` dependency (research.md §4.2)
-- [X] T007 [P] Create the value objects in `src/Nabadat.IntegrationHub/Domain/ValueObjects/`: `Scenario`, `CredentialMechanism`, `CredentialStatus`, `DataType` (13 members, closed list — never Duration/Identifier, `[PO-G17]`), `ParameterOrigin`, `ResultCode`, `ParameterWireValues`
-- [X] T008 [P] Create the nine entities in `src/Nabadat.IntegrationHub/Domain/Entities/` per data-model.md §1–§8: `Integration`, `Credential`, `ServiceChannel`, `Parameter`, `ChannelParameterAssignment`, `ParameterMapping`, `UnmappedValueOccurrence`, `IntegrationRequestLog`, `EventLog` — one type per file
-- [X] T009 Author `src/Nabadat.IntegrationHub/Infrastructure/Migrations/IntegrationHub_Baseline.sql` — all 8 owned tables + `event_log`, every CHECK/unique constraint enforcing its VR/BR, **DB-04 monthly partitioning** of `integration_request_logs` (prev 3 → next 12 months + `DEFAULT`), and the 23 seeded built-in parameters (FR-F0-10). **No EF migrations** (DB-08). Idempotent on re-run
-- [X] T010 [P] Create one `IEntityTypeConfiguration<T>` per entity plus the enum converters in `src/Nabadat.IntegrationHub/Infrastructure/Persistence/Configurations/` — explicit `HasColumnName`, intra-module FKs only (Article 4.1: `Parameter.api_field` is an identifier reference to M-10, never a cross-module FK)
-- [X] T011 Create `ITenantDbContext` in `src/Nabadat.IntegrationHub/Application/Interfaces/` (DbSets + `SaveChangesAsync` + `ExecuteAsync`) and the concrete `TenantDbContext` in `Infrastructure/Persistence/`
-- [X] T012 Create `src/Nabadat.IntegrationHub/IntegrationHubServiceCollectionExtensions.cs` — `AddIntegrationHubModule(IConfiguration)` composition root
-- [X] T013 Host wiring: add the M-13 `ProjectReference` to `src/Nabadat.TenantAdmin/Nabadat.TenantAdmin.csproj` and call `builder.Services.AddIntegrationHubModule(builder.Configuration)` in `src/Nabadat.TenantAdmin/Program.cs` — without this every M-13 controller 404s (TODO-M13-002)
-- [X] T014 Extend `src/Nabadat.TenantAdmin/Development/DevTenantSchemaBootstrapper.cs` to read and apply `IntegrationHub_Baseline.sql` per tenant schema, gated on a `service_channels` sentinel; copy the baseline to the output `Migrations/` folder from the module csproj
-- [X] T015 [P] Publish `IParameterCatalogReader` + `ParameterCatalogEntry` in `src/Nabadat.IntegrationHub/Domain/Interfaces/` — the forward contract for M-14/15/16 (contracts/published-interfaces.md)
-- [X] T016 [P] Declare the three M-13-owned consumed ports in `Domain/Interfaces/`: `ISurveyResolutionReader`, `ISurveyDispatchGateway` (M-02, research.md §4.3), `IResponseIngestionGateway` (M-04, §4.4)
-- [X] T017 [P] Create the `Null*` default adapters in `src/Nabadat.IntegrationHub/Infrastructure/ChannelDispatch/` plus the `Recorded*` test doubles, so every story is buildable standalone with a zero-code-change swap path when M-02/M-04 ship
-- [X] T018 Create `tests/Nabadat.IntegrationHub.IntegrationTests/Infrastructure/IntegrationHubApplicationFactory.cs` — `WebApplicationFactory<Program>` + `IAsyncLifetime`, boots Testcontainers Postgres, applies `IntegrationHub_Baseline.sql`, exposes a per-test `HttpClient` + seeding helpers
-- [X] T019 [P] Add the integration-test support types: `Infrastructure/JsonHttp.cs`, `Infrastructure/SeededUser.cs`, `Infrastructure/IntegrationHubIntegrationCollection.cs`
-- [X] T020 Register the stub ports and the module's services in DI (`IntegrationHubServiceCollectionExtensions`), including `IExternalParameterReferenceReader` → `Infrastructure/CrossModule/NullExternalParameterReferenceReader` (TODO-M13-005)
-- [X] T021 Frontend: register the Integration Hub navigation in `frontend/src/components/AppLayout.tsx` — **two adjacent `SidebarGroup`s** (`nav.integrationHub` → Integrations, Request logs; `nav.integrationHubDataModel` → Service channels, Parameters, Parameter mappings) per FR-GBL Navigation, with per-persona `ROLE_NAV_KEYS` entries. Request logs is P-07-only (no P-01 grant at all, BR-24)
-- [X] T022 [P] Frontend: scaffold `frontend/src/features/integration-hub/{components,hooks,pages}/` and `http.ts` (auth header + API-05 error envelope parsing, reusing the `callJson` pattern)
-- [X] T023 [P] Frontend: create `api.ts`, `dto.ts`, `integration-hub-api-error.ts`, `mapping-import-error.ts`
-- [X] T024 Frontend: register the eight routes in `frontend/src/App.tsx` and add `pages/ScreenPlaceholderPages.tsx` + `components/ScreenPlaceholder.tsx` so every route is reachable from day one
-- [X] T025 [P] Frontend: add the `integrationHub` i18n namespace to `frontend/src/i18n/locales/{en,ar}.json` — Arabic written natively in فصحى, never translated
-- [X] T026 [P] Frontend: `hooks/useIntegrationHubAccess.ts` + `components/AccessDenied.tsx` — the shared permission/access-denied primitive every screen uses (FR-GBL-02/05)
-- [X] T027 [P] Register `TimeProvider` in the module's DI and wire `FakeTimeProvider` into the unit-test support so no production code reads `DateTime.UtcNow` (Unit Test Policy rule 8)
-- [X] T028 [P] Extend `tests/Nabadat.E2ETests/Infrastructure/E2ETenantDb.cs` with the M-13 seeding/teardown helpers the browser lane needs (service channels, parameters, contract rows)
+### Domain foundations
+
+- [ ] T007 [P] Create the value-object enums — one type per file — in `src/Nabadat.IntegrationHub/Domain/ValueObjects/`: `Scenario.cs` (SCN-01…05), `CredentialMechanism.cs` (ApiKey, OAuth2), `CredentialStatus.cs` (Active, Revoked), `DataType.cs` (the 13 types VR-T01…T13), `ParameterOrigin.cs` (BuiltIn, Custom), `ResultCode.cs` (E-1001…E-1500 + success codes)
+- [ ] T008 [P] Create the eight Domain entities — one type per file — in `src/Nabadat.IntegrationHub/Domain/Entities/`: `Integration.cs`, `Credential.cs`, `ServiceChannel.cs`, `Parameter.cs`, `ChannelParameterAssignment.cs`, `ParameterMapping.cs`, `UnmappedValueOccurrence.cs`, `IntegrationRequestLog.cs`, exactly per data-model.md §1–8
+- [ ] T009 [P] Create the consumed stub ports in `src/Nabadat.IntegrationHub/Domain/Interfaces/`: `ISurveyResolutionReader.cs`, `ISurveyDispatchGateway.cs` (M-02, research.md §4.3), `IResponseIngestionGateway.cs` (M-04, §4.4) — dependency-inversion stubs owned by M-13, mirroring M-15's `IKpiScoreReader` precedent
+- [ ] T010 [P] Create the published forward contract `src/Nabadat.IntegrationHub/Domain/Interfaces/IParameterCatalogReader.cs` for M-14/M-15/M-16 (CMC-07, contracts/published-interfaces.md)
+
+### Persistence foundations (DB-08 — no EF migrations)
+
+- [ ] T011 Create `src/Nabadat.IntegrationHub/Application/Interfaces/ITenantDbContext.cs` — the eight `DbSet<T>` properties + `SaveChangesAsync` + `ExecuteAsync` (the atomicity seam)
+- [ ] T012 Create `src/Nabadat.IntegrationHub/Infrastructure/Persistence/TenantDbContext.cs` implementing `ITenantDbContext`, resolving the tenant schema `tenant_{slug}` (AD-02)
+- [ ] T013 [P] Create the eight `IEntityTypeConfiguration<T>` classes in `src/Nabadat.IntegrationHub/Infrastructure/Persistence/Configurations/` — explicit `HasColumnName` per property, FK relationships, and enum→int converters per data-model.md
+- [ ] T014 Create `src/Nabadat.IntegrationHub/Infrastructure/Migrations/IntegrationHub_Baseline.sql` — the eight tables (DB-05 mechanism), including `integration_request_logs` with **DB-04 monthly partitioning** and its 90-day retention policy (NFR-8); register the file with `tools/Nabadat.Migrations` and `dotnet build` that tool before running it
+- [ ] T015 Wire persistence + all module services into `IntegrationHubServiceCollectionExtensions.cs` (DbContext, `ITenantDbContext`, `TimeProvider`, the stub ports from T009)
+
+### Cross-module adapters
+
+- [ ] T016 [P] Create `src/Nabadat.IntegrationHub/Infrastructure/SurveyBuilderIntegration/RealSurveyRenderServiceAdapter.cs` wrapping M-01's already-shipped `ISurveyRenderService` for SCN-03 (research.md §4.2 — the SRS mis-labelled this "M-03"; corrected in coordination-log.md C-04)
+- [ ] T017 [P] Create `src/Nabadat.IntegrationHub/Infrastructure/UserManagementIntegration/DataScopeHttpClient.cs` calling M-10's already-shipped `POST /api/v1/authorization/scope/parameters` (BR-10/CMC-06, research.md §4.1) — typed `HttpClient` with the API-05 error envelope
+- [ ] T018 [P] Create the M-02/M-04 no-op stubs in `src/Nabadat.IntegrationHub/Infrastructure/ChannelDispatch/`: `NullSurveyResolutionReader.cs`, `NullSurveyDispatchGateway.cs`, `NullResponseIngestionGateway.cs`
+
+### Test-lane foundations
+
+- [ ] T019 Create `tests/Nabadat.IntegrationHub.IntegrationTests/Infrastructure/IntegrationHubApplicationFactory.cs` — `WebApplicationFactory<Program>` + `IAsyncLifetime`, boots Testcontainers Postgres, applies `IntegrationHub_Baseline.sql`, exposes a per-test `HttpClient` and seeding helpers (first-feature-in-module carve-out, Unit Test Policy rule 12); plus `TestSupport/` shared builders in `tests/Nabadat.IntegrationHub.UnitTests/TestSupport/`
+- [ ] T020 Seed the **23 built-in parameters** (all enabled by default, BR-09) as baseline data in `IntegrationHub_Baseline.sql`, and add a seeding helper to the application factory — US1's channel contract and US2's catalogue both assume they already exist
+
+### Frontend foundations
+
+- [ ] T021 Create the frontend feature shell `frontend/src/features/integration-hub/{components,hooks,pages}/` and its API client `frontend/src/features/integration-hub/api.ts` reusing the `callJson` pattern from `tenants/api.ts` — API-05 error envelope, 204/empty-body handling, `Authorization: Bearer <session_token>`, and **integer-enum normalize helpers** at the response boundary (CLAUDE.md Backend Integration §1: assume .NET enums arrive as ints)
+- [ ] T022 Register the eight M-13 routes in `frontend/src/App.tsx` — `/integration-hub/integrations`, `…/integrations/new`, `…/integrations/:id`, `/integration-hub/service-channels`, `…/service-channels/new`, `…/service-channels/:id`, `/integration-hub/parameters`, `/integration-hub/mappings`, `/integration-hub/logs`
+- [ ] T023 Register the Integration Hub nav group in `frontend/src/components/app-sidebar.tsx` — add the items to `NAV_ITEMS` under a domain-matching **existing** category group (never appended to an unrelated group, never an "Other" bucket) and add each key to the P-01 and P-07 allowlists in `ROLE_NAV_KEYS`
+- [ ] T024 [P] Add the EN + AR i18n blocks for the module to `frontend/src/i18n/{en,ar}.json` — Arabic written **natively in فصحى**, never translated from the English (CLAUDE.md Brand Voice); use `{{n}}` with a pre-formatted `.toLocaleString()` string for counts, never i18next's `{{count}}`
 
 **Checkpoint**: Foundation ready — user story implementation can begin.
 
@@ -126,570 +129,662 @@ depends on.
 
 ## Phase 3: User Story 1 — Define a Service Channel and its Parameter Contract (Priority: P1) 🎯 MVP
 
-**Goal**: A CX Manager creates a service channel with bilingual names, a live-sanitised channel ID,
-and a supported/required parameter contract — the foundational configuration every other story
-needs.
+**Goal**: A CX Manager (P-01) creates a service channel with bilingual EN/AR names, a live-sanitised
+channel ID, and a Supported/Required parameter contract over the 23 seeded built-ins. Nothing else
+in the module is testable without a channel to attach an integration to.
 
-**Independent Test**: `/integration-hub/service-channels` → **New service channel** → EN/AR names +
-channel ID "My kiosk #1" (sanitises live to "Mykiosk1", capped at 19 chars) → toggle **Supported**
-on several built-ins, tick **Required** on a subset → **Create channel** → the row appears in SCR-03
-with correct counts and an Active badge.
+**Independent Test**: `/integration-hub/service-channels` → **New service channel** → type EN/AR
+names, type "My kiosk #1" and verify live sanitisation to "Mykiosk1" capped under 20 chars → toggle
+**Supported** on a few built-ins, tick **Required** on a subset → **Create channel** → the channel
+appears in the SCR-03 list with correct supported/required counts and an Active badge.
 
-### Unit Tests for User Story 1 (write FIRST, must FAIL) ⚠️
+### Unit Tests for User Story 1 (REQUIRED — write FIRST, must FAIL before implementation) ⚠️
 
-- [X] T029 [P] [US1] Unit tests for `ChannelIdSanitizer` in `tests/Nabadat.IntegrationHub.UnitTests/Channels/ChannelIdSanitizerTests.cs` — `Sanitize("My kiosk #1")` → `"Mykiosk1"`; 20 valid chars → truncated to 19 (VR-F04)
-- [X] T030 [P] [US1] Unit tests for `ChannelIdUniquenessValidator` in `tests/Nabadat.IntegrationHub.UnitTests/Channels/ChannelIdUniquenessValidatorTests.cs` — case-insensitive per tenant: `existingIds=["KIOSK-01"], id="kiosk-01"` → `Invalid("A channel with this ID already exists")`
-- [X] T031 [P] [US1] Unit tests for `ChannelIdLockGuard` in `tests/Nabadat.IntegrationHub.UnitTests/Channels/ChannelIdLockGuardTests.cs` — `hasLoggedSuccessfulRequest=true` → locked, server-side rejection of a stale client PUT; `false` → editable (BR-05)
-- [X] T032 [P] [US1] Unit tests for `ParameterContractDependencyRule` in `tests/Nabadat.IntegrationHub.UnitTests/Channels/ParameterContractDependencyRuleTests.cs` — `(supported=false, required=true)` → `(false, false)`; Required settable only while Supported (FR-S4-04)
-- [X] T033 [P] [US1] Unit tests for `ChannelNameValidator` in `tests/Nabadat.IntegrationHub.UnitTests/Channels/ChannelNameValidatorTests.cs` — EN required ≤ 50 + unique (VR-F02); AR required (VR-F03)
+- [ ] T025 [P] [US1] Unit tests for `ChannelIdSanitizer` in `tests/Nabadat.IntegrationHub.UnitTests/Channels/ChannelIdSanitizerTests.cs` — `Sanitize("My kiosk #1")` → `"Mykiosk1"` (spaces and `#` stripped, case preserved); `Sanitize(19 valid chars + 1 more)` → truncated to 19 (VR-F04)
+- [ ] T026 [P] [US1] Unit tests for `ChannelIdUniquenessValidator` in `tests/Nabadat.IntegrationHub.UnitTests/Channels/ChannelIdUniquenessValidatorTests.cs` — `Validate(existingIds=["KIOSK-01"], id="kiosk-01")` → `Invalid("A channel with this ID already exists")`, case-insensitive per tenant (VR-F04)
+- [ ] T027 [P] [US1] Unit tests for `ChannelIdLockGuard` in `tests/Nabadat.IntegrationHub.UnitTests/Channels/ChannelIdLockGuardTests.cs` — `IsLocked(channel, hasLoggedSuccessfulRequest=true)` → `true` and a subsequent `PUT` changing `channelId` is rejected server-side; `IsLocked(…, false)` → `false`, editable (BR-05)
+- [ ] T028 [P] [US1] Unit tests for `ParameterContractDependencyRule` in `tests/Nabadat.IntegrationHub.UnitTests/Channels/ParameterContractDependencyRuleTests.cs` — `ApplyDependency(supported=false, required=true)` → `(false, false)`; `ApplyDependency(supported=true, required=false→true)` → `(true, true)` (FR-S4-04)
+- [ ] T029 [P] [US1] Unit tests for `ChannelNameValidator` in `tests/Nabadat.IntegrationHub.UnitTests/Channels/ChannelNameValidatorTests.cs` — `Validate(nameEn="", nameAr="جيد")` → `Invalid("Channel name · EN is required")`; EN ≤ 50 chars + unique per tenant (VR-F02); AR required (VR-F03)
 
-### Red Checkpoint for User Story 1 🔴
+### Red Checkpoint for User Story 1 (MANDATORY — gate between tests and implementation) 🔴
 
-- [X] T033R [US1] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`. Valid red: compile error (no `Application/Channels/` types yet). Paste the transcript and commit the red baseline before any implementation task. Non-parallel
+- [ ] T030R [US1] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`. Expected valid red: **compile error**, since `src/Nabadat.IntegrationHub/Application/Channels/` does not exist yet. Paste the failing transcript as evidence, then commit the red baseline via `/speckit-git-commit` before reading or writing any implementation task. Non-parallel
 
 ### Implementation for User Story 1
 
-- [X] T034 [US1] Create the channel DTOs and the five rule types in `src/Nabadat.IntegrationHub/Application/Channels/` — `ChannelIdSanitizer`, `ChannelIdUniquenessValidator`, `ChannelIdLockGuard`, `ParameterContractDependencyRule`, `ChannelNameValidator`, plus `Dtos/` (`ServiceChannelCreateCommand`, `ServiceChannelUpdateCommand`, `ServiceChannelDto`, `ChannelContractRowDto`, `ChannelParameterAssignmentInput`, `ServiceChannelPage`, `ServiceChannelSaveResult`) and `ChannelValidationResult`/`ChannelValidationError`/`ChannelErrorCodes`
-- [X] T035 [US1] Implement `IServiceChannelService`/`ServiceChannelService` (`Application/Channels/` + `Interfaces/`) and `ServiceChannelsController` + `Api/Contracts/` — `GET`/`POST` `/api/v1/integration-hub/service-channels`, `PUT .../{id}`. **The first M-13 endpoint**; multi-write atomicity (channel + contract rows) via `ITenantDbContext.ExecuteAsync`
-- [X] T036 [US1] Frontend: `hooks/useServiceChannels.ts` + the channel calls in `api.ts`
-- [X] T037 [US1] Frontend: `components/ServiceChannelForm.tsx` — SCR-04 create/edit (`/integration-hub/service-channels/new` and `/:id`): EN/AR names, live-sanitised channel ID with the BR-05 lock explanation, description, Active toggle (default On), live contract-summary alert (FR-S4-03), and the parameter-contract table with live filter + the Supported → Required dependency (FR-S4-04). Shipped copy per spec.md's SCR-04 field-details block
-- [X] T038 [US1] Frontend: `pages/AllServiceChannelsPage.tsx` — SCR-03 list (FR-S3-01): name+description · monospace channel-ID chip · status · supported/required/integrations counts · Edit row action. **No delete affordance anywhere** (BR-07/FR-S3-02). Skeleton/empty/error/access-denied states (FR-GBL-02), footer guidance note
-- [X] T039 [US1] Frontend: FR-GBL-03 unsaved-changes guard on SCR-04 — an `AlertDialog` (`data-testid="channel-unsaved-dialog"`) mirroring `KpiConfigPage`'s pattern; derive dirtiness by digesting the whole field set against a baseline captured on open, not per-`onChange` flags (see TODO-M13-006)
-- [X] T040 [US1] Enforce VR-F13's 100-channel tenant ceiling on the create path (`validation.capacity_exceeded`, copy "You've reached the limit of ‹n› ‹entity› for this tenant.") and emit the `channel.created` / `channel.updated` / `channel.id_changed` audit events
+- [ ] T031 [P] [US1] Implement `ChannelIdSanitizer` in `src/Nabadat.IntegrationHub/Application/Channels/ChannelIdSanitizer.cs` — strip everything outside `[A-Za-z0-9-]`, cap at 19 chars (VR-F04)
+- [ ] T032 [P] [US1] Implement `ChannelIdUniquenessValidator` in `src/Nabadat.IntegrationHub/Application/Channels/ChannelIdUniquenessValidator.cs` — case-insensitive per tenant
+- [ ] T033 [P] [US1] Implement `ChannelIdLockGuard` in `src/Nabadat.IntegrationHub/Application/Channels/ChannelIdLockGuard.cs` — locks the ID once the channel has logged its first 2xx request (BR-05)
+- [ ] T034 [P] [US1] Implement `ParameterContractDependencyRule` in `src/Nabadat.IntegrationHub/Application/Channels/ParameterContractDependencyRule.cs`
+- [ ] T035 [P] [US1] Implement `ChannelNameValidator` in `src/Nabadat.IntegrationHub/Application/Channels/ChannelNameValidator.cs`
+- [ ] T036 [US1] Create the data-access port `IServiceChannelStore` in `src/Nabadat.IntegrationHub/Application/Channels/Interfaces/IServiceChannelStore.cs` and its implementation `ServiceChannelStore.cs` in `Application/Channels/` — depends on `ITenantDbContext`, write methods self-persist (this port is the unit-test mock seam)
+- [ ] T037 [US1] Implement `ServiceChannelService` in `src/Nabadat.IntegrationHub/Application/Channels/ServiceChannelService.cs` — create/edit/list, composing T031–T036; wraps the channel + `ChannelParameterAssignment` rows in one `ITenantDbContext.ExecuteAsync` (atomic contract write); takes `TimeProvider` by injection (depends on T031–T036)
+- [ ] T038 [P] [US1] Create the request/response DTOs in `src/Nabadat.IntegrationHub/Api/Contracts/` — `CreateServiceChannelRequest.cs`, `UpdateServiceChannelRequest.cs`, `ServiceChannelResponse.cs`, `ServiceChannelListItemResponse.cs` (supported/required/integration counts), one type per file
+- [ ] T039 [US1] Implement `ServiceChannelsController` in `src/Nabadat.IntegrationHub/Api/Controllers/ServiceChannelsController.cs` — `GET`/`POST` `/api/v1/integration-hub/service-channels`, `PUT …/{id}`, cursor pagination (API-04), API-05 error envelope. **No `DELETE` route exists** (BR-07) (depends on T037, T038)
+- [ ] T040 [US1] Emit the M-17 audit events `channel.created` / `channel.updated` / `channel.id_changed` from `src/Nabadat.IntegrationHub/Application/Events/` — actor, tenant, timestamp, entity, before/after summary (BR-21)
+- [ ] T041 [P] [US1] Implement `useServiceChannels` in `frontend/src/features/integration-hub/hooks/useServiceChannels.ts` — list/create/update via `api.ts`, loading + error state
+- [ ] T042 [US1] Build **SCR-03** `AllServiceChannelsPage` in `frontend/src/features/integration-hub/pages/AllServiceChannelsPage.tsx` — table in an `overflow-hidden rounded-lg border` card, `TableHeader` sticky (no `bg-background`), row actions as **icon-only ghost buttons in a `w-16 text-center` unlabelled column**, filter row `flex flex-col gap-4 sm:flex-row sm:items-end` with `sm:max-w-sm` search + `sm:w-48` selects using `flex flex-col gap-1.5`, skeleton/empty/error/access-denied states (FR-GBL-02), and **no delete control anywhere** (BR-07)
+- [ ] T043 [US1] Build **SCR-04** `ServiceChannelFormPage` in `frontend/src/features/integration-hub/pages/ServiceChannelFormPage.tsx` — EN/AR name + description + Active toggle; channel-ID input sanitising live as typed with `maxlength=19`, rendered **read-only with the lock explanation** once locked (BR-05); unsaved-changes guard (FR-GBL-03); one filled primary CTA, every other action `variant="secondary"`, Cancel `variant="outline"`
+- [ ] T044 [US1] Build the parameter-contract editor `frontend/src/features/integration-hub/components/ParameterContractEditor.tsx` — a Supported/Required row per built-in where clearing **Supported** clears and disables **Required**, plus the live contract-summary alert whose counts track the toggles (FR-S4-03/04)
 
-### Integration & API Tests for User Story 1 🐳
+### Integration & API / Scenario Tests for User Story 1 (run at the per-story checkpoint) 🐳
 
-- [X] T041 [US1] API tests in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/ServiceChannelsEndpointTests.cs` — create → 201 + `channel.created`; duplicate ID case-insensitive → 409; edit ID pre-lock → 200 (path changes) and post-first-2xx → 409; `active=false` → 200; `GET` list reflects supported/required/integration counts
+- [ ] T045 [P] [US1] API tests for `POST /api/v1/integration-hub/service-channels` in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/ServiceChannels/CreateServiceChannelEndpointTests.cs` — valid EN/AR + ID + contract rows → 201 with the `channel.created` audit row; duplicate ID case-insensitive → 409 with the uniqueness message
+- [ ] T046 [P] [US1] API tests for `PUT /api/v1/integration-hub/service-channels/{id}` in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/ServiceChannels/UpdateServiceChannelEndpointTests.cs` — edit channel ID **before** first success → 200 and the endpoint path changes; edit **after** first 2xx → 409 (ID locked); `active=false` → 200
+- [ ] T047 [P] [US1] API test for `GET /api/v1/integration-hub/service-channels` in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/ServiceChannels/ListServiceChannelsEndpointTests.cs` — list reflects supported/required/integration counts; assert no `DELETE` route is routable (404/405, BR-07)
 
-> **Scenario test**: spec.md declares `scenario-test: not-needed` for US1 — the deactivation-cascade
-> sequence is asserted end-to-end by US4's `InboundRequestLifecycleScenarioTests` instead.
+> `scenario-test: not-needed` per spec.md US1 — channel create/edit is single-endpoint; the
+> deactivation-cascade is asserted end-to-end in US4's scenario test instead, not duplicated here.
 
 ### E2E (Browser) Tests for User Story 1 🎭
 
-- [X] T042 [US1] E2E tests in `tests/Nabadat.E2ETests/IntegrationHub/ServiceChannelTests.cs` (M13-E2E-01…06) covering `ServiceChannel_sanitizes_id_live_as_typed_and_caps_at_19_chars`, `…_locks_id_field_after_first_successful_request`, `…_required_toggle_disables_when_supported_is_off`, `…_blocks_save_on_duplicate_name_or_id`, `…_list_shows_no_delete_action_anywhere`, `…_it_admin_sees_read_only_view`. Inherit `E2ETestBase`; tear down every seeded/created channel in `[TestCleanup]` (VR-F13 ceiling, TODO-M13-003); update `COVERAGE.md`
+> Authored AFTER the pages exist, with the `e2e-testing` skill. Run at the checkpoint. NO Red Checkpoint.
 
-**Build gate**: `dotnet test tests/Nabadat.IntegrationHub.UnitTests` green · `dotnet test tests/Nabadat.IntegrationHub.IntegrationTests` green (Docker up) · `npm run build` green from `frontend/` · `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~ServiceChannelTests"` green (stack up + `E2E_BASE_URL`).
+- [ ] T048 [P] [US1] E2E tests in `tests/Nabadat.E2ETests/IntegrationHub/ServiceChannelTests.cs` inheriting `E2ETestBase` — `ServiceChannel_sanitizes_id_live_as_typed_and_caps_at_19_chars` (AC-S4-01), `ServiceChannel_locks_id_field_after_first_successful_request` (AC-S4-02), `ServiceChannel_required_toggle_disables_when_supported_is_off` (AC-S4-03), `ServiceChannel_blocks_save_on_duplicate_name_or_id` (VR-F02/F04), `ServiceChannel_list_shows_no_delete_action_anywhere` (BR-07), `ServiceChannel_it_admin_sees_read_only_view` (BR-24); select by `data-testid`/role, never translated text; add a `COVERAGE.md` row per test
 
-**Checkpoint**: US1 fully functional and independently testable. ✅ **Reached** (COVERAGE.md: M13-E2E-01…06 passing)
+**Build gate (MANDATORY before declaring the checkpoint reached)**: `dotnet test tests/Nabadat.IntegrationHub.UnitTests` → 0 failures; `dotnet test tests/Nabadat.IntegrationHub.IntegrationTests` → 0 failures (Docker up); `npm run build` in `frontend/` green; `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~ServiceChannelTests"` green (stack up + `E2E_BASE_URL` set).
+
+**Checkpoint**: User Story 1 is fully functional and independently testable — the module's MVP.
 
 ### Click-through Parity for User Story 1 🎨
 
-> **Owner: the frontend developer, run manually.** Preconditions: (1) SCR-03/04 were built
-> click-through-blind — a ported page makes the run VOID and is reported `NOT AUDITED`, not clean;
-> (2) the click-through checkout is served and the product dev stack is up and signed in (paths in
-> `.claude/skills/clickthrough-parity/reference.json`).
+> **Owner: the frontend developer, run manually** — not an automatic step, so the defect list lands
+> when someone is ready to triage it. **Preconditions:** (1) SCR-03/04 were implemented
+> **click-through-blind** — if either page was ported or copied the run is VOID and is reported
+> `NOT AUDITED`, not clean; (2) the click-through checkout is served and the product dev stack is up
+> and signed in (paths in `.claude/skills/clickthrough-parity/reference.json`).
 
-- [ ] T042P [US1] Run `/clickthrough-parity 006-integration-hub phase 3` over `/integration-hub/service-channels`, `…/new`, `…/:id` and triage the report — the click-through is the source of truth. Apply accepted defects with `--fix`; take every **Needs discussion** item (presence / placement / a deliberate business divergence, e.g. the FR-GBL-03 guard the click-through lacks) to the design owner instead. Record the result in `.claude/skills/clickthrough-parity/route-map.md`
+- [ ] T049P [US1] Run `/clickthrough-parity 006-integration-hub phase 3` over `/integration-hub/service-channels`, `…/new` and `…/:id`, and triage the report — the click-through is the source of truth. Expect real defects (mostly copy, placeholders, and layout chrome the spec does not describe). Apply the ones the frontend lead accepts with `--fix`; take every **Needs discussion** item (presence / placement / a deliberate business divergence, e.g. the FR-GBL-03 unsaved-changes guard the click-through lacks) to the design owner instead — `--fix` must never touch those. Record the result in `.claude/skills/clickthrough-parity/route-map.md`
 
 ---
 
 ## Phase 4: User Story 2 — Manage the Parameter Catalogue (Priority: P1)
 
-**Goal**: A CX Manager governs the 23 pre-seeded built-in parameters plus tenant-specific custom
-ones — bilingual names, a lock-on-first-use `snake_case` API field, one of 13 data types (Range
-sub-config, List → mappings), a validation rule, five usage flags, and channel assignments.
+**Goal**: A CX Manager governs the tenant's parameter catalogue — the 23 seeded built-ins plus custom
+parameters — with bilingual names, a locked-after-first-use `snake_case` API field name, one of
+thirteen data types (Range carrying min/max/unit), usage flags, and channel assignments.
 
-**Independent Test**: `/integration-hub/parameters` → "All · 23" tab shows every built-in enabled →
-**New parameter** → EN "Wait Time" auto-suggests `wait_time` → type **Range** with min/max/unit →
-flags → assign to a channel → **Create parameter** → the Custom row appears with its flags as
-check/dash glyphs.
+**Independent Test**: `/integration-hub/parameters` → the "All · 23" tab shows every built-in enabled
+→ **New parameter** → type EN name "Wait Time" and verify the API field auto-suggests `wait_time` →
+select type **Range**, set min/max/unit → set usage flags → assign to a channel → **Create parameter**
+→ the Custom parameter appears with its flags rendered as check/dash glyphs.
 
-### Unit Tests for User Story 2 (write FIRST, must FAIL) ⚠️
+### Unit Tests for User Story 2 (REQUIRED — write FIRST, must FAIL) ⚠️
 
-- [X] T043 [P] [US2] Unit tests for `ApiFieldNameSuggester` in `tests/Nabadat.IntegrationHub.UnitTests/Parameters/ApiFieldNameSuggesterTests.cs` — `Suggest("Wait Time")` → `"wait_time"`; `"Été & Café!"` → invalid chars stripped, no transliteration; every output satisfies the DB CHECK (no leading digit, no doubled underscore)
-- [X] T044 [P] [US2] Unit tests for `ApiFieldNameUniquenessValidator` in `…/Parameters/ApiFieldNameUniquenessValidatorTests.cs` — unique per tenant across built-in + custom + enabled + **disabled** (VR-F06); the validator receives the whole field list so it structurally cannot filter on `enabled`
-- [X] T045 [P] [US2] Unit tests for `ApiFieldNameLockGuard` in `…/Parameters/ApiFieldNameLockGuardTests.cs` — locked once the first request carrying it arrived (BR-11); built-ins always locked
-- [X] T046 [P] [US2] Unit tests for `RangeConfigValidator` in `…/Parameters/RangeConfigValidatorTests.cs` — Min/Max required, Min < Max: `Validate(min=100, max=50)` → `Invalid("Minimum must be less than Maximum")` (VR-F07)
-- [X] T047 [P] [US2] Unit tests for `ParameterDisableImpactScanner` in `…/Parameters/ParameterDisableImpactScannerTests.cs` — returns **all** references across channel contracts, M-10 scope filters, and rules for Dialog D-6 (BR-10); empty list → disable proceeds with no dialog
-- [X] T048 [P] [US2] Unit tests for `BuiltInParameterGuard` in `…/Parameters/BuiltInParameterGuardTests.cs` — `Guard(builtIn=true, action=Delete)` → throws; `Disable` allowed; rename/retype rejected (BR-09, `[PO-G27]`), plus a field-set guard on the `ParameterAction` enum
+- [ ] T050 [P] [US2] Unit tests for `ApiFieldNameSuggester` in `tests/Nabadat.IntegrationHub.UnitTests/Parameters/ApiFieldNameSuggesterTests.cs` — `Suggest("Wait Time")` → `"wait_time"`; `Suggest("Été & Café!")` → non-`[a-z0-9\s]` characters **stripped** (no transliteration), yielding a valid `snake_case` candidate
+- [ ] T051 [P] [US2] Unit tests for `ApiFieldNameUniquenessValidator` in `tests/Nabadat.IntegrationHub.UnitTests/Parameters/ApiFieldNameUniquenessValidatorTests.cs` — `Validate(existingFields=["wait_time"], field="wait_time", includeDisabled=true)` → `Invalid("This API field name is already in use")`; unique across built-in + custom + enabled + **disabled** (VR-F06)
+- [ ] T052 [P] [US2] Unit tests for `ApiFieldNameLockGuard` in `tests/Nabadat.IntegrationHub.UnitTests/Parameters/ApiFieldNameLockGuardTests.cs` — `IsLocked(parameter, hasReceivedRequest=true)` → `true` (BR-11); re-enabling a previously disabled parameter never frees or changes the locked field name (BR-09/BR-11 are independent axes)
+- [ ] T053 [P] [US2] Unit tests for `RangeConfigValidator` in `tests/Nabadat.IntegrationHub.UnitTests/Parameters/RangeConfigValidatorTests.cs` — Min required, Max required, `Validate(min=100, max=50)` → `Invalid("Minimum must be less than Maximum")` (VR-F07)
+- [ ] T054 [P] [US2] Unit tests for `ParameterDisableImpactScanner` in `tests/Nabadat.IntegrationHub.UnitTests/Parameters/ParameterDisableImpactScannerTests.cs` — `ScanReferences(parameterId="service", scopeFilters=[…], channelContracts=[…])` → the **full** non-empty reference list feeding Dialog D-6 (all three consumer kinds at once, not just the first found, BR-10); `ScanReferences("unused_custom_param")` → empty → disable proceeds with no dialog
+- [ ] T055 [P] [US2] Unit tests for `BuiltInParameterGuard` in `tests/Nabadat.IntegrationHub.UnitTests/Parameters/BuiltInParameterGuardTests.cs` — `Guard(builtIn=true, action=Delete)` → `throws InvalidOperationException`; `Guard(builtIn=true, action=Disable)` → allowed (BR-09)
 
 ### Red Checkpoint for User Story 2 🔴
 
-- [X] T049 [US2] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests` — valid red (compile error, no `Application/Parameters/` types). Transcript pasted; red baseline committed (`3bd0227`). Non-parallel
+- [ ] T056R [US2] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`. Valid red: compile error (`Application/Parameters/` absent) or assertion failure once the types are stubbed. Paste the transcript and commit the red baseline before implementation. Non-parallel
 
 ### Implementation for User Story 2
 
-- [X] T050 [US2] Create the parameter DTOs in `src/Nabadat.IntegrationHub/Application/Parameters/Dtos/` — `ParameterCreateCommand`, `ParameterPatchCommand`, `ParameterDto`, `ParameterListFilter`, `ParameterPage`, `ParameterOriginCounts`, `ParameterSaveResult`
-- [X] T051 [US2] Implement `ApiFieldNameSuggester` in `Application/Parameters/ApiFieldNameSuggester.cs`
-- [X] T052 [US2] Implement `ApiFieldNameUniquenessValidator` in `Application/Parameters/ApiFieldNameUniquenessValidator.cs`
-- [X] T053 [US2] Implement `ApiFieldNameLockGuard` in `Application/Parameters/ApiFieldNameLockGuard.cs`
-- [X] T054 [US2] Implement `RangeConfigValidator` in `Application/Parameters/RangeConfigValidator.cs`
-- [X] T055 [US2] Implement `ParameterDisableImpactScanner` in `Application/Parameters/ParameterDisableImpactScanner.cs` — stamps and orders all three reference kinds via `IExternalParameterReferenceReader` (external two-thirds stubbed, TODO-M13-005)
-- [X] T056 [US2] Implement `BuiltInParameterGuard` + `ParameterAction` + `BuiltInParameterViolationException` in `Application/Parameters/`
-- [X] T057 [US2] Implement `IParameterService`/`ParameterService` — list with AND-combined origin/type/search filters + global tab counts, create, patch (incl. `ScanReferencesAsync` for the D-6 withhold), `MappingSupportPolicy` per BR-27
-- [X] T058 [US2] Implement `ParametersController` + `Api/Contracts/` — `GET`/`POST /api/v1/integration-hub/parameters`, `PATCH .../{id}`; **no DELETE route exists** (BR-09)
-- [X] T059 [US2] Implement the real M-10 data-scope integration — `Application/Parameters/DataScopeContractPublisher.cs` + `Infrastructure/UserManagementIntegration/DataScopeHttpClient.cs` calling `POST /api/v1/authorization/scope/parameters` (research.md §4.1, CMC-06)
-- [X] T060 [US2] Wire the parameter services, the data-scope client, and `IExternalParameterReferenceReader` into `IntegrationHubServiceCollectionExtensions`
-- [X] T061 [US2] Frontend: `components/ParameterDrawer.tsx` — SCR-06 drawer over SCR-05 (✕ / scrim / Esc all funnel through one `requestClose()`): bilingual names (max 50), API-field auto-suggest with the BR-11 lock helper, the **13-type** select (read-only for built-ins), conditional Range card / List panel, validation rule, the five usage flags with ratified defaults (BR-27-driven Mapping support), channel-assignment pills, the `FlagGlyph` check/dash renderer, **and the FR-GBL-03 unsaved-changes guard** (derived `digest(form) !== baseline`, baseline re-captured on open and after save)
-- [X] T062 [US2] Frontend: `hooks/useParameters.ts` + the parameter calls in `api.ts`
-- [X] T063 [US2] Frontend: `pages/AllParametersPage.tsx` — SCR-05 list (FR-S5-01/02): `TabsListSegmented` origin tabs with global `TabsCountPill` counts, name/API-field search, type filter (all AND-combined), and the parameters table with icon-only ghost row actions
-- [X] T064 [US2] Frontend: SCR-05 inline enable/disable toggle (FR-S5-03) guarded by **Dialog D-6** listing every reference before anything changes, audited
-- [X] T065 [US2] API tests in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/ParametersEndpointTests.cs` 🐳 — create custom Range → 201 + `parameter.created`; duplicate API field incl. against a disabled parameter → 409; `PATCH {enabled:false}` unreferenced → 200; referenced → withheld + reference list; `?origin=custom&type=range` AND filter; any delete-shaped call → 404/405
-- [X] T066 [US2] Integration test for the real M-10 call in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/DataScopeContractPublisherTests.cs` 🐳 — the published contract reaches `POST /api/v1/authorization/scope/parameters` end-to-end
+- [ ] T057 [P] [US2] Implement `ApiFieldNameSuggester` in `src/Nabadat.IntegrationHub/Application/Parameters/ApiFieldNameSuggester.cs` — lowercase, spaces → `_`, strip invalid characters
+- [ ] T058 [P] [US2] Implement `ApiFieldNameUniquenessValidator` in `src/Nabadat.IntegrationHub/Application/Parameters/ApiFieldNameUniquenessValidator.cs` — includes disabled parameters (VR-F06)
+- [ ] T059 [P] [US2] Implement `ApiFieldNameLockGuard` in `src/Nabadat.IntegrationHub/Application/Parameters/ApiFieldNameLockGuard.cs` (BR-11)
+- [ ] T060 [P] [US2] Implement `RangeConfigValidator` in `src/Nabadat.IntegrationHub/Application/Parameters/RangeConfigValidator.cs` (VR-F07)
+- [ ] T061 [P] [US2] Implement `BuiltInParameterGuard` in `src/Nabadat.IntegrationHub/Application/Parameters/BuiltInParameterGuard.cs` (BR-09)
+- [ ] T062 [US2] Implement `ParameterDisableImpactScanner` in `src/Nabadat.IntegrationHub/Application/Parameters/ParameterDisableImpactScanner.cs` — scans M-10 data-scope filters, rule builders, and channel contracts, returning every reference (BR-10)
+- [ ] T063 [US2] Create the data-access port `IParameterStore` in `src/Nabadat.IntegrationHub/Application/Parameters/Interfaces/IParameterStore.cs` + `ParameterStore.cs` in `Application/Parameters/`, and implement the published `IParameterCatalogReader` (T010) over it
+- [ ] T064 [US2] Implement `ParameterService` in `src/Nabadat.IntegrationHub/Application/Parameters/ParameterService.cs` — create/edit/enable/disable/list, composing T057–T063, atomic via `ExecuteAsync`, clock via `TimeProvider` (depends on T057–T063)
+- [ ] T065 [US2] Implement `DataScopeContractPublisher` in `src/Nabadat.IntegrationHub/Application/Parameters/DataScopeContractPublisher.cs` — publishes parameter definitions to M-10 through `DataScopeHttpClient` (T017) on create/enable/disable (BR-10/CMC-06, a **REAL** already-shipped integration)
+- [ ] T066 [P] [US2] Create the DTOs in `src/Nabadat.IntegrationHub/Api/Contracts/` — `CreateParameterRequest.cs`, `PatchParameterRequest.cs`, `ParameterResponse.cs`, `ParameterReferenceListResponse.cs` (the D-6 payload), one type per file
+- [ ] T067 [US2] Implement `ParametersController` in `src/Nabadat.IntegrationHub/Api/Controllers/ParametersController.cs` — `GET` (with AND-combined `origin` + `type` filters), `POST`, `PATCH …/{id}`; a `PATCH { enabled:false }` on a referenced parameter returns the reference list so the client can render D-6; **no `DELETE` route exists** (BR-09) (depends on T064, T066)
+- [ ] T068 [US2] Emit `parameter.created` / `parameter.updated` / `parameter.disabled` audit events from `Application/Events/` (BR-21)
+- [ ] T069 [P] [US2] Implement `useParameters` in `frontend/src/features/integration-hub/hooks/useParameters.ts`
+- [ ] T070 [US2] Build **SCR-05** `AllParametersPage` in `frontend/src/features/integration-hub/pages/AllParametersPage.tsx` — **`<TabsListSegmented>` with `<TabsCountPill>`** for All / Built-in / Custom (counts **global**, never narrowed by the filters below), an AND-combined type filter, and boolean usage-flag columns rendered as **`Check`/`Minus` Lucide glyphs in brand cyan** (`text-nb-cyan-700 dark:text-nb-cyan-300`) — never the literal `✓`/`—` characters, and never semantic green (a capability flag is not a health state)
+- [ ] T071 [US2] Build **SCR-06** `ParameterDrawer` in `frontend/src/features/integration-hub/components/ParameterDrawer.tsx` — a `Sheet` with the pinned-header / `min-h-0 flex-1 overflow-y-auto` body / pinned-footer pattern; EN/AR names, auto-suggesting API-field input (read-only once locked), data-type select swapping the **Range card** ↔ the **List panel**, usage flags, channel assignments, unsaved-changes guard (FR-GBL-03); hints at `text-xs leading-relaxed`, validation errors stay `text-sm text-destructive`
 
-> **Scenario test**: spec.md declares `scenario-test: not-needed` for US2.
+### Integration & API Tests for User Story 2 🐳
+
+- [ ] T072 [P] [US2] API tests for `POST /api/v1/integration-hub/parameters` in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Parameters/CreateParameterEndpointTests.cs` — create a custom Range parameter → 201 + `parameter.created` audit; duplicate API field **including against a disabled parameter** → 409
+- [ ] T073 [P] [US2] API tests for `PATCH /api/v1/integration-hub/parameters/{id}` in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Parameters/PatchParameterEndpointTests.cs` — `{enabled:false}` on an unreferenced parameter → 200 with no reference list; on a channel-contract-referenced parameter → 200 **with** the reference list for D-6 (BR-10)
+- [ ] T074 [P] [US2] API test for `GET /api/v1/integration-hub/parameters?origin=custom&type=range` in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Parameters/ListParametersEndpointTests.cs` — combined AND filter; assert any delete-shaped call → 404/405 (BR-09)
+
+> `scenario-test: not-needed` per spec.md US2 — create/enable/disable are single-endpoint operations.
 
 ### E2E (Browser) Tests for User Story 2 🎭
 
-- [X] T067 [US2] E2E tests in `tests/Nabadat.E2ETests/IntegrationHub/ParameterCatalogueTests.cs` (M13-E2E-07…13) covering `Parameters_type_switch_between_range_and_list_shows_correct_panel`, `…_api_field_auto_suggests_from_english_name`, `…_blocks_save_on_duplicate_api_field_including_disabled`, `…_origin_and_type_filters_combine_with_AND`, `…_disable_shows_impact_warning_when_referenced`, `…_builtin_row_has_no_delete_action_and_locked_api_field`, `…_range_validation_blocks_min_greater_than_max`. Full teardown of everything seeded; update `COVERAGE.md`
+- [ ] T075 [P] [US2] E2E tests in `tests/Nabadat.E2ETests/IntegrationHub/ParameterCatalogueTests.cs` — `Parameters_type_switch_between_range_and_list_shows_correct_panel` (AC-S6-01), `Parameters_api_field_auto_suggests_from_english_name` (AC-S6-02), `Parameters_blocks_save_on_duplicate_api_field_including_disabled` (AC-S6-03), `Parameters_origin_and_type_filters_combine_with_AND` (AC-S5-01), `Parameters_disable_shows_impact_warning_when_referenced` (AC-S5-02), `Parameters_builtin_row_has_no_delete_action_and_locked_api_field` (BR-09), `Parameters_range_validation_blocks_min_greater_than_max` (VR-F07); update `COVERAGE.md`
 
-**Build gate**: unit + integration projects green · `npm run build` green · `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~ParameterCatalogueTests"` green.
+**Build gate (MANDATORY)**: unit + integration projects green; `npm run build` green; `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~ParameterCatalogueTests"` green.
 
-**Checkpoint**: US1 AND US2 both work independently. ✅ **Reached** (COVERAGE.md: M13-E2E-07…13 passing)
+**Checkpoint**: US1 and US2 both work independently.
 
 ### Click-through Parity for User Story 2 🎨
 
-> Owner: the frontend developer, run manually. Same two preconditions as T042P.
+> Owner: the frontend developer, run manually. Preconditions: SCR-05/06 built click-through-blind
+> (a ported page is `NOT AUDITED`, not clean); click-through checkout served + dev stack signed in.
 
-- [ ] T067P [US2] Run `/clickthrough-parity 006-integration-hub phase 4` over `/integration-hub/parameters` (SCR-05 + the SCR-06 drawer) and triage the report. Apply accepted defects with `--fix`; escalate every **Needs discussion** item to the design owner. Record the result in `route-map.md`
+- [ ] T076P [US2] Run `/clickthrough-parity 006-integration-hub phase 4` over `/integration-hub/parameters` (SCR-05 plus the SCR-06 drawer, which has no route of its own) and triage the report. Apply accepted defects with `--fix`; escalate every **Needs discussion** item to the design owner — `--fix` must never touch those. Record the result in `.claude/skills/clickthrough-parity/route-map.md`
 
 ---
 
 ## Phase 5: User Story 3 — Onboard an Integration via the New/Edit Wizard (Priority: P1)
 
-**Goal**: A Tenant IT Administrator provisions a caller's endpoint through a 3-step wizard — name +
-active channel + exactly one of five scenarios; API-key **or** OAuth client-credentials with
-show-once secrets; then a review of the endpoint, the channel's accepted-parameters contract, and
-the result-code catalogue.
+**Goal**: A Tenant IT Administrator (P-07) provisions an integration in a 3-step wizard — Step 1 name +
+active channel + exactly one of five scenarios; Step 2 API Key **or** OAuth 2.0 client-credentials with
+show-once credentials; Step 3 endpoint preview, accepted-parameters contract, and result-code catalogue.
 
-**Independent Test**: `/integration-hub/integrations` → **New integration** → Step 1: name "Core
-Services Bus — Survey Dispatch", the US1 channel, the **Dispatch via Nabadat** card → Step 2: API
-key + label + **Generate new API key** → Dialog D-1 shows the plaintext once → Step 3: endpoint
-preview with the highlighted channel-ID token + accepted-parameters table matching US1's contract →
-**Create integration** → the SCR-01 row shows zero traffic and "—" error rate.
+**Independent Test**: `/integration-hub/integrations` → **New integration** → Step 1: name "Core Services
+Bus — Survey Dispatch", pick the US1 channel, select **Dispatch via Nabadat** → Continue → Step 2: **API
+key**, label it, **Generate new API key** → Dialog D-1 shows the plaintext once → **Done** → Continue →
+Step 3: the endpoint preview shows method, path, and highlighted channel-ID token, and the accepted-
+parameters table matches US1's contract → **Create integration** → SCR-01 shows the row with zero traffic
+and "—" error rate.
 
-**Status**: unit tests exist on disk; **no production code** — `Application/Integrations/` is absent.
+### Unit Tests for User Story 3 (REQUIRED — write FIRST, must FAIL) ⚠️
 
-### Unit Tests for User Story 3 (write FIRST, must FAIL) ⚠️
-
-- [X] T068 [P] [US3] Unit tests for `IntegrationNameValidator` in `tests/Nabadat.IntegrationHub.UnitTests/Integrations/IntegrationNameValidatorTests.cs` — required, **case-insensitively** unique per tenant, ≤ 100 chars (VR-F01)
-- [X] T069 [P] [US3] Unit tests for `ScenarioSelectionRule` in `…/Integrations/ScenarioSelectionRuleTests.cs` — exactly one of SCN-01…05; a second scenario needs a second integration (BR-02)
-- [X] T070 [P] [US3] Unit tests for `ApiKeyGenerationService` in `…/Integrations/ApiKeyGenerationServiceTests.cs` — plaintext returned exactly once, stored value ≠ plaintext, later reads return only the masked form; generating while `K1` is active implicitly revokes `K1` (BR-16)
-- [X] T071 [P] [US3] Unit tests for `OAuthClientGenerationService` in `…/Integrations/OAuthClientGenerationServiceTests.cs` — grant type always `client_credentials`, token TTL always 15 minutes, neither configurable via input (BR-17); selected scopes applied
-- [X] T072 [P] [US3] Unit tests for `CredentialRevocationService` in `…/Integrations/CredentialRevocationServiceTests.cs` — immediate revocation; subsequent auth check → `Invalid` → `401 E-1401`; no un-revoke operation exists
-- [X] T073 [P] [US3] Unit tests for `WizardDraftDiscardPolicy` in `…/Integrations/WizardDraftDiscardPolicyTests.cs` — a credential generated mid-wizard is never persisted/usable when the wizard is cancelled (BR-25)
+- [ ] T077 [P] [US3] Unit tests for `IntegrationNameValidator` in `tests/Nabadat.IntegrationHub.UnitTests/Integrations/IntegrationNameValidatorTests.cs` — `Validate(name="", …)` → `Invalid("Integration name is required")`; `Validate(existingNames=["Core Bus"], name="core bus")` → `Invalid` (**case-insensitive**, VR-F01); ≤ 100 chars
+- [ ] T078 [P] [US3] Unit tests for `ScenarioSelectionRule` in `tests/Nabadat.IntegrationHub.UnitTests/Integrations/ScenarioSelectionRuleTests.cs` — `SelectScenario(current=SCN-01, attemptSecond=SCN-03)` → rejected; exactly one scenario field per integration, not a multi-select (BR-02)
+- [ ] T079 [P] [US3] Unit tests for `ApiKeyGenerationService` in `tests/Nabadat.IntegrationHub.UnitTests/Integrations/ApiKeyGenerationServiceTests.cs` — `Generate(keyLabel="Core Bus Key")` returns the plaintext **once** and the stored value ≠ plaintext (hashed/encrypted, NFR-6); a later retrieval returns only the masked form; `Generate(existingActiveKey=K1, newLabel="K2")` → K1 implicitly revoked, K2 active (BR-16)
+- [ ] T080 [P] [US3] Unit tests for `OAuthClientGenerationService` in `tests/Nabadat.IntegrationHub.UnitTests/Integrations/OAuthClientGenerationServiceTests.cs` — grant type is **always** `client_credentials` and token TTL **always** 15 minutes, neither configurable via input (BR-17); selected scopes applied
+- [ ] T081 [P] [US3] Unit tests for `CredentialRevocationService` in `tests/Nabadat.IntegrationHub.UnitTests/Integrations/CredentialRevocationServiceTests.cs` — `Revoke(K1)` → immediate; a subsequent auth check for K1 → `Invalid` → maps to `401 E-1401`; no un-revoke operation exists
+- [ ] T082 [P] [US3] Unit tests for `WizardDraftDiscardPolicy` in `tests/Nabadat.IntegrationHub.UnitTests/Integrations/WizardDraftDiscardPolicyTests.cs` — `DiscardOnCancel(generatedCredential=K1, wizardCancelled=true)` → K1 is never persisted or usable (BR-25)
 
 ### Red Checkpoint for User Story 3 🔴
 
-- [ ] T074 [US3] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`. The six test files above exist but `src/Nabadat.IntegrationHub/Application/Integrations/` does not, so the expected red state is a **compile error**. Re-confirm and paste the transcript, then commit the red baseline before T075. Non-parallel
+- [ ] T083R [US3] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`. Valid red: compile error (`Application/Integrations/` absent) or assertion failure once stubbed. Paste the transcript and commit the red baseline before implementation. Non-parallel
 
 ### Implementation for User Story 3
 
-- [ ] T075 [US3] Create `src/Nabadat.IntegrationHub/Application/Integrations/Dtos/` — `IntegrationCreateCommand`, `IntegrationUpdateCommand`, `IntegrationDto`, `IntegrationPage`, `CredentialGenerationResult` (carries the show-once plaintext), `CredentialDto`, plus `IntegrationValidationResult`/`IntegrationErrorCodes`
-- [ ] T076 [US3] Implement `IntegrationNameValidator` in `Application/Integrations/IntegrationNameValidator.cs` (VR-F01)
-- [ ] T077 [US3] Implement `ScenarioSelectionRule` in `Application/Integrations/ScenarioSelectionRule.cs` — a single `Scenario` field, never a multi-select (BR-02)
-- [ ] T078 [US3] Implement `ApiKeyGenerationService` in `Application/Integrations/ApiKeyGenerationService.cs` — hash/encrypt at rest (NFR-6), show-once, implicit revocation of the prior active key (BR-16); takes the injected `TimeProvider`
-- [ ] T079 [US3] Implement `OAuthClientGenerationService` in `Application/Integrations/OAuthClientGenerationService.cs` — `client_id`/`client_secret` hashed at rest, fixed `client_credentials` grant + 15-minute TTL in code, scopes from BR-26's five values
-- [ ] T080 [US3] Implement `CredentialRevocationService` in `Application/Integrations/CredentialRevocationService.cs` — one-way Active → Revoked, no un-revoke API surface
-- [ ] T081 [US3] Implement `WizardDraftDiscardPolicy` in `Application/Integrations/WizardDraftDiscardPolicy.cs` (BR-25)
-- [ ] T082 [US3] Implement `IIntegrationService`/`IntegrationService` in `Application/Integrations/` (+ `Interfaces/`) — create integration + credential **in one `ITenantDbContext.ExecuteAsync` transaction**; revoke-old + generate-new atomically (BR-16); VR-F13's 200-integration ceiling; server-side rejection of a deactivated channel (defense in depth, FR-S2-02)
-- [ ] T083 [US3] Implement `IntegrationsController` + `Api/Contracts/` — `GET`/`POST /api/v1/integration-hub/integrations`, `PUT .../{id}`, `POST .../{id}/credentials`, `POST .../{id}/credentials/revoke` per contracts/api-endpoints.md; emit `integration.created`, `integration.updated`, `credential.generated`, `credential.revoked` audit events
-- [ ] T084 [US3] Frontend: `hooks/useIntegrations.ts` + the integration/credential calls in `api.ts`
-- [ ] T085 [US3] Frontend: `components/IntegrationWizard.tsx` + `pages/IntegrationWizardPage.tsx` — the SCR-02 3-step shell at `/integration-hub/integrations/new` and `…/:id` (FR-S2-01): **`WizardStepper` from `@/components/ui/wizard-stepper`** (never a hand-rolled circle row), Back/Continue/Create footer (`justify-between`, Back `variant="outline"`, one filled primary), cancel-discard, state reset on re-entry, edit-mode pre-fill, **and the FR-GBL-03 unsaved-changes guard** using the derived-digest shape twice proven on SCR-04/SCR-06 (closes the last third of TODO-M13-006). Validation-gated: pass no `onClick` for unreached steps
-- [ ] T086 [US3] Frontend: Step 1 (FR-S2-02/03) — `name` (VR-F01), `serviceChannel` select defaulting to the first **active** channel and rendering "Name — CHANNEL-ID", `description`, and the five scenario **choice cards** (`role="radiogroup"` / `role="radio"`, `size-9` icon tile + radio dot + semibold label + 12px description, `sm:grid-cols-2 xl:grid-cols-5`), no default selection in create mode. Shipped copy per spec.md's Step-1 block
-- [ ] T087 [US3] Frontend: Step 2 (FR-S2-04/05/06) — mechanism radio switching the visible config; **API key**: `keyLabel` + read-only masked `currentKey` with **Revoke**; **OAuth**: `clientName`, read-only `tokenEndpoint`, scope chips (default `survey-requests:write`). Dialogs **D-1** (API key generated), **D-2** (client credentials), **D-3** (revoke confirmation naming the masked key and the consequence). **The field sets must NOT contain** expiry, sandbox, allowed-source-IPs, grant-type, or token-lifetime fields (`[PO-G13]`, BR-17)
-- [ ] T088 [US3] Frontend: Step 3 (FR-S2-07/08/09) — endpoint preview re-rendering on scenario/channel change with the highlighted channel-ID token and a **Copy** button that flips to "Copied ✓"; the accepted-parameters table re-rendered from the selected channel's contract; the result-codes card rendering the FR-F0-03 catalogue. Code sample in a fixed dark block (`bg-nb-navy-800 dark:bg-nb-dark`, mono, `dir="ltr"`)
-- [ ] T089 [US3] Frontend: FR-S2-10 conditional security configuration — the SCN-04 **Allowed origins** list and the SCN-02 **Link expiry** override (default 24h), shown only after the matching scenario is selected
-- [ ] T090 [US3] Frontend: `pages/AllIntegrationsPage.tsx` — the SCR-01 table (FR-S1-03/04): integration name + credential-kind/created-date sub-line · monospace channel chip · scenario badge · auth badge · status · Requests·24h · error-rate badge or "—" · last activity · row actions (View logs, Edit). Header **New integration** and **View request logs**. *(Stat tiles and filters land in US5.)*
-- [ ] T091 [US3] API tests in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/IntegrationsEndpointTests.cs` 🐳 — create with API key → 201 + `integration.created` + `credential.generated`; create with OAuth + scopes → 201; revoke → 200 + `credential.revoked`, old key → `401 E-1401`; generate while active → old implicitly revoked; duplicate name → 409; deactivated channel → 400/409; `PUT` channel change → endpoint path updates
-- [ ] T092 [US3] Scenario test `tests/Nabadat.IntegrationHub.IntegrationTests/Scenarios/IntegrationOnboardingScenarioTests.cs` 🐳 — `POST /integrations` → `GET /integrations/{id}` → a live call to the provisioned endpoint (`202 ACCEPTED`) → `POST .../credentials/revoke` → repeat call (`401 E-1401`). Asserts exactly one `integration.created`, one `credential.generated`, one `credential.revoked`, in order
+- [ ] T084 [P] [US3] Implement `IntegrationNameValidator` in `src/Nabadat.IntegrationHub/Application/Integrations/IntegrationNameValidator.cs` (VR-F01)
+- [ ] T085 [P] [US3] Implement `ScenarioSelectionRule` in `src/Nabadat.IntegrationHub/Application/Integrations/ScenarioSelectionRule.cs` (BR-02)
+- [ ] T086 [US3] Implement `ApiKeyGenerationService` in `src/Nabadat.IntegrationHub/Application/Integrations/ApiKeyGenerationService.cs` — cryptographically random key, hashed/encrypted at rest, plaintext returned exactly once; regeneration implicitly revokes the prior active key (BR-16, NFR-6)
+- [ ] T087 [US3] Implement `OAuthClientGenerationService` in `src/Nabadat.IntegrationHub/Application/Integrations/OAuthClientGenerationService.cs` — `client_id`/`client_secret` hashed at rest; `client_credentials` + 15-minute TTL fixed **in code**, never surfaced as input (BR-17)
+- [ ] T088 [US3] Implement `CredentialRevocationService` in `src/Nabadat.IntegrationHub/Application/Integrations/CredentialRevocationService.cs` — immediate, irreversible; no un-revoke method on the surface
+- [ ] T089 [P] [US3] Implement `WizardDraftDiscardPolicy` in `src/Nabadat.IntegrationHub/Application/Integrations/WizardDraftDiscardPolicy.cs` (BR-25)
+- [ ] T090 [US3] Create the data-access ports + implementations `IIntegrationStore`/`IntegrationStore` and `ICredentialStore`/`CredentialStore` in `src/Nabadat.IntegrationHub/Application/Integrations/{Interfaces/,}` — depend on `ITenantDbContext`
+- [ ] T091 [US3] Implement `IntegrationService` in `src/Nabadat.IntegrationHub/Application/Integrations/IntegrationService.cs` — create/edit/list/get, endpoint-path provisioning from the selected channel, rejecting an **inactive** channel server-side (defense in depth, FR-S2-02); atomic integration + credential write via `ExecuteAsync` (depends on T084–T090)
+- [ ] T092 [P] [US3] Create the DTOs in `src/Nabadat.IntegrationHub/Api/Contracts/` — `CreateIntegrationRequest.cs`, `UpdateIntegrationRequest.cs`, `IntegrationResponse.cs`, `GenerateCredentialRequest.cs`, `GeneratedCredentialResponse.cs` (the show-once payload), one type per file
+- [ ] T093 [US3] Implement `IntegrationsController` in `src/Nabadat.IntegrationHub/Api/Controllers/IntegrationsController.cs` — `GET`/`POST` `/api/v1/integration-hub/integrations`, `PUT …/{id}`, `POST …/{id}/credentials`, `POST …/{id}/credentials/revoke`; **no `DELETE` route ever** (Status Lifecycle) (depends on T091, T092)
+- [ ] T094 [US3] Emit `integration.created` / `integration.updated` / `credential.generated` / `credential.revoked` audit events from `Application/Events/` (BR-21)
+- [ ] T095 [P] [US3] Implement `useIntegrations` in `frontend/src/features/integration-hub/hooks/useIntegrations.ts`
+- [ ] T096 [US3] Build **SCR-02** `IntegrationWizardPage` in `frontend/src/features/integration-hub/pages/IntegrationWizardPage.tsx` using the shared **`WizardStepper`** from `@/components/ui/wizard-stepper` (never a hand-rolled row of numbered circles) — validation-gated, so pass **no** `onClick` for unreached steps; page header carries Cancel (`variant="outline"`) only, the step's primary action lives in the footer
+- [ ] T097 [US3] Build Step 1 in `frontend/src/features/integration-hub/components/WizardStepBasics.tsx` — name, active-channels-only `Select` (FR-S2-02), and the five scenarios as **choice cards**: `role="radiogroup"` wrapping `role="radio"` buttons, each with a `size-9` rounded icon tile, a radio dot (selection never conveyed by border colour alone), a semibold label and a 12px description, gridded `sm:grid-cols-2 xl:grid-cols-5` (BR-02)
+- [ ] T098 [US3] Build Step 2 in `frontend/src/features/integration-hub/components/WizardStepAuth.tsx` — mechanism switch showing/hiding the API-key vs OAuth field sets (FR-S2-04), OAuth scopes as **chips** not a stacked checkbox column, and Dialogs **D-1** (API key show-once) / **D-2** (OAuth client show-once) with `flex max-h-[90vh] flex-col` + `shrink-0` header/footer + a `min-h-0 flex-1 overflow-y-auto` body, and `sm:max-w-lg` (never a bare `max-w-lg`). **No expiry / sandbox / IP-allow-list / grant-type / token-lifetime fields exist** (`[PO-G13]`, BR-17)
+- [ ] T099 [US3] Build Step 3 in `frontend/src/features/integration-hub/components/WizardStepReview.tsx` — endpoint preview in a **fixed dark code block** (`bg-nb-navy-800 dark:bg-nb-dark`, mono, `dir="ltr"`) with a Copy button and the channel-ID token highlighted, the accepted-parameters table from the channel contract, and the result-code catalogue; both the path token and the table re-render when the Step-1 channel changes (FR-S2-07/08)
+- [ ] T100 [US3] Build **SCR-01** `AllIntegrationsPage` list portion in `frontend/src/features/integration-hub/pages/AllIntegrationsPage.tsx` — the table, the **New integration** primary CTA, and a new row rendering zero traffic with a "—" error rate (AC-S1-03). *(The stat tiles and error-rate colouring belong to US5.)*
+
+### Integration & API / Scenario Tests for User Story 3 🐳
+
+- [ ] T101 [P] [US3] API tests for `POST /api/v1/integration-hub/integrations` in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Integrations/CreateIntegrationEndpointTests.cs` — SCN-01 + API key → 201 with endpoint provisioned and `integration.created` + `credential.generated` audit rows; OAuth + scopes → 201; duplicate name → 409 (VR-F01); deactivated channel supplied → 400/409
+- [ ] T102 [P] [US3] API tests for the credential routes in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Integrations/CredentialEndpointTests.cs` — `POST …/{id}/credentials/revoke` → 200 + `credential.revoked`, and a subsequent API call with the old key → `401 E-1401`; `POST …/{id}/credentials` while one is active → 200 with the old key implicitly revoked (BR-16)
+- [ ] T103 [P] [US3] API test for `PUT /api/v1/integration-hub/integrations/{id}` in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Integrations/UpdateIntegrationEndpointTests.cs` — changing the service channel → 200 and the response's endpoint path reflects the new channel
+- [ ] T104 [US3] Scenario test `IntegrationOnboardingScenarioTests` in `tests/Nabadat.IntegrationHub.IntegrationTests/Scenarios/Integrations/IntegrationOnboardingScenarioTests.cs` — `POST /integrations` (API key) → `GET /integrations/{id}` (endpoint + contract shape) → a **live call** to the provisioned endpoint (`202 ACCEPTED`, per US4) → `POST …/credentials/revoke` → repeat the call (`401 E-1401`). Carries the integration id + credential across 4+ calls; asserts the final state: exactly one `integration.created`, one `credential.generated`, one `credential.revoked`, in order
 
 ### E2E (Browser) Tests for User Story 3 🎭
 
-- [ ] T093 [US3] E2E tests in `tests/Nabadat.E2ETests/IntegrationHub/IntegrationWizardTests.cs` — `Wizard_switches_auth_fields_when_mechanism_changes`, `Wizard_api_key_dialog_never_shows_plaintext_again_after_done`, `Wizard_endpoint_and_contract_preview_update_when_channel_changes`, `Wizard_only_offers_one_scenario_selection_at_a_time`, `Wizard_channel_select_excludes_inactive_channels`, `Wizard_cancel_discards_generated_credential_and_draft`, `Wizard_blocks_step_advance_on_missing_required_field`, `Integrations_new_row_shows_zero_traffic_and_dash_error_rate`. Full teardown (VR-F13's 200-integration ceiling); update `COVERAGE.md`
+- [ ] T105 [P] [US3] E2E tests in `tests/Nabadat.E2ETests/IntegrationHub/IntegrationWizardTests.cs` — `Wizard_switches_auth_fields_when_mechanism_changes` (AC-S2-01), `Wizard_api_key_dialog_never_shows_plaintext_again_after_done` (AC-S2-02), `Wizard_endpoint_and_contract_preview_update_when_channel_changes` (AC-S2-04), `Wizard_only_offers_one_scenario_selection_at_a_time` (BR-02), `Wizard_channel_select_excludes_inactive_channels` (FR-S2-02), `Wizard_cancel_discards_generated_credential_and_draft` (BR-25), `Wizard_blocks_step_advance_on_missing_required_field` (VR-F01/F10), `Integrations_new_row_shows_zero_traffic_and_dash_error_rate` (AC-S1-03); update `COVERAGE.md`
 
-**Build gate**: unit + integration projects green · `npm run build` green · `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~IntegrationWizardTests"` green.
+**Build gate (MANDATORY)**: unit + integration projects green (Docker up); `npm run build` green; `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~IntegrationWizardTests"` green.
 
-**Checkpoint**: US1–US3 all work independently.
+**Checkpoint**: US1–US3 all work independently. An integration now exists to receive traffic.
 
 ### Click-through Parity for User Story 3 🎨
 
-> Owner: the frontend developer, run manually. Same two preconditions as T042P.
+> Owner: the frontend developer, run manually. Preconditions: SCR-01/02 built click-through-blind
+> (a ported page is `NOT AUDITED`, not clean); click-through checkout served + dev stack signed in.
 
-- [ ] T093P [US3] Run `/clickthrough-parity 006-integration-hub phase 5` over `/integration-hub/integrations`, `…/new`, `…/:id` and triage the report. Apply accepted defects with `--fix`; escalate **Needs discussion** items. Record the result in `route-map.md`
+- [ ] T106P [US3] Run `/clickthrough-parity 006-integration-hub phase 5` over `/integration-hub/integrations`, `…/new` and `…/:id` (the 3-step wizard) and triage the report. Apply accepted defects with `--fix`; escalate every **Needs discussion** item — especially any step-order or scenario-card placement difference — to the design owner. Record the result in `.claude/skills/clickthrough-parity/route-map.md`
 
 ---
 
-## Phase 6: User Story 4 — Process Inbound API Requests (Priority: P1)
+## Phase 6: User Story 4 — Process Inbound API Requests (Priority: P1) — headless Feature 0
 
-**Goal**: The headless runtime behind every provisioned endpoint — an ordered, atomic 8-step
-validation pipeline, the normative result-code catalogue, and the five scenario hand-offs.
+**Goal**: The headless runtime every provisioned endpoint runs on. A caller sends the service channel ID
+as the **only** mandatory path parameter (BR-03) plus free key–value pairs; the request passes the
+ordered, atomic 8-step pipeline, then is handed to the scenario's downstream owner or returns the
+requested artifact directly.
 
-**Independent Test**: With US3's SCN-01 integration, `POST` a valid request with all channel-required
-parameters and a valid API key → `202 ACCEPTED` + `request_id`, visible in SCR-08 within 60s. Then
-omit a required parameter → `400 E-1002` naming the missing field, nothing forwarded to M-02.
+**Independent Test**: Using the US3 integration (SCN-01, API key), send a valid `POST` with all
+channel-required parameters and a valid key → `202 ACCEPTED` with a `request_id`, visible in SCR-08
+within 60 s. Then send a request missing a required parameter → the **whole** request rejected
+`400 E-1002` naming the missing field, and nothing forwarded to M-02.
 
-> **E2E**: spec.md declares `e2e-tests: skipped — Feature 0 is an explicitly headless system feature
-> with no admin-console screen.` Its human-visible surface is covered by US5's E2E suite. **No E2E
-> subsection and no Click-through Parity subsection for this phase.**
+> **`e2e-tests: skipped`** per spec.md US4 — Feature 0 is an explicitly headless system feature with no
+> admin-console screen; there is no browser flow to drive. Its *visibility* to a human (SCR-08) is
+> covered by US5's E2E suite. **No E2E and no click-through-parity subsection is emitted for this phase.**
 
-### Unit Tests for User Story 4 (write FIRST, must FAIL) ⚠️
+### Unit Tests for User Story 4 (REQUIRED — write FIRST, must FAIL) ⚠️
 
-- [ ] T094 [P] [US4] Unit tests for `RequestValidationPipeline` in `tests/Nabadat.IntegrationHub.UnitTests/Requests/RequestValidationPipelineTests.cs` — short-circuits at the **first** failing step in the normative order; `authInvalid=true, payloadTooLarge=true` → `401 E-1401` (not `413`); nothing forwarded downstream on any failure
-- [ ] T095 [P] [US4] Unit tests for `ResultCodeMapper` in `…/Requests/ResultCodeMapperTests.cs` — each outcome → its code **and its exact message copy pattern** (FR-F0-03), e.g. `E-1002` → `"Required parameter 'mobile' is missing for service channel E-SERVICES-PORTAL."`
-- [ ] T096 [P] [US4] Unit tests for `ChannelContractRequiredFieldChecker` in `…/Requests/ChannelContractRequiredFieldCheckerTests.cs` — the **channel contract** is authoritative on requiredness, not the parameter-level default (BR-08)
-- [ ] T097 [P] [US4] Unit tests for `ParameterTypeValidator` + the 13 per-type validators in `…/Requests/ParameterTypeValidatorTests.cs` — VR-T01…T13 boundary matrices: `Phone("07701")` → `Invalid`; `Phone("+962770123456")` → `Valid`; `Range(150, min=0, max=100)` → `Invalid` (inclusive); `List("anything-unmapped")` → `Valid` (membership not enforced, VR-T06/BR-12); Geolocation lat/long bounds; Percentage default 0–100
-- [ ] T098 [P] [US4] Unit tests for `UnregisteredParameterStore` in `…/Requests/UnregisteredParameterStoreTests.cs` — unknown keys stored raw, flagged "unregistered", excluded from reports/dashboards/filters/rule builders (BR-14, AC-F0-03)
-- [ ] T099 [P] [US4] Unit tests for `IdempotencyKeyResolver` in `…/Requests/IdempotencyKeyResolverTests.cs` — keys on `(tenant, channelId, transaction_id)`; a repeat writes a new log entry without re-triggering downstream side effects (BR-18/F0.7)
-- [ ] T100 [P] [US4] Unit tests for `AllowedOriginsWhitelistStore` in `…/Requests/AllowedOriginsWhitelistStoreTests.cs` — `Resolve(origin="https://evil.example", whitelist=["https://trusted.example"])` → refused (FR-S2-10, SCN-04)
-- [ ] T101 [P] [US4] Unit tests for `SurveyLinkExpiryCalculator` in `…/Requests/SurveyLinkExpiryCalculatorTests.cs` — `ComputeExpiry(issuedAt=T, override=null)` → `T + 24h` (F0.8), override honoured; uses `FakeTimeProvider`
+- [ ] T107 [P] [US4] Unit tests for `RequestValidationPipeline` in `tests/Nabadat.IntegrationHub.UnitTests/Requests/RequestValidationPipelineTests.cs` — the ordered, atomic 8-step pipeline (TLS → auth → rate limit → payload size → channel resolution → channel-active → required-params → type/validation) short-circuits on the **first** failure: `Process(request, authInvalid=true, payloadTooLarge=true)` → `401 E-1401` (auth wins, **not** `413`); no partial processing (FR-F0-02)
+- [ ] T108 [P] [US4] Unit tests for `ResultCodeMapper` in `tests/Nabadat.IntegrationHub.UnitTests/Requests/ResultCodeMapperTests.cs` — every pipeline outcome maps to the normative catalogue (`E-1001`, `E-1002`, `E-1003`, `E-1004`, `E-1401`, `E-1413`, `E-1429`, `E-1500`, `202`, `200`) with the **exact** message copy patterns, incl. `"Required parameter 'mobile' is missing for service channel E-SERVICES-PORTAL."`
+- [ ] T109 [P] [US4] Unit tests for `ChannelContractRequiredFieldChecker` in `tests/Nabadat.IntegrationHub.UnitTests/Requests/ChannelContractRequiredFieldCheckerTests.cs` — the **channel contract**, not the parameter-level default, is authoritative (BR-08); `Process(request={missing:"mobile"})` → `400 E-1002`
+- [ ] T110 [P] [US4] Unit tests for `ParameterTypeValidator` and the 13 per-type validators in `tests/Nabadat.IntegrationHub.UnitTests/Requests/ParameterTypeValidatorTests.cs` — `Validate(type=Phone, value="07701")` → `Invalid` → `422 E-1003` with `"Value '07701' for 'mobile' failed validation rule for type Phone."`; `Validate(type=Phone, value="+962770123456")` → `Valid` (E.164, 8–15 digits after `+`); `Validate(type=Range, value=150, min=0, max=100)` → `Invalid` (inclusive bounds); `Validate(type=List, value="anything-unmapped")` → **`Valid`** (membership NOT enforced at ingestion, VR-T06/BR-12); plus the remaining types VR-T01…T13
+- [ ] T111 [P] [US4] Unit tests for `UnregisteredParameterStore` in `tests/Nabadat.IntegrationHub.UnitTests/Requests/UnregisteredParameterStoreTests.cs` — `Process(request={extra:"loyalty_tier"})` succeeds, the pair is stored **raw** and flagged unregistered for the log detail, and is excluded from every report/dashboard/filter/rule builder (AC-F0-03, BR-14)
+- [ ] T112 [P] [US4] Unit tests for `IdempotencyKeyResolver` in `tests/Nabadat.IntegrationHub.UnitTests/Requests/IdempotencyKeyResolverTests.cs` — keys on `(tenant, channelId, transaction_id)`; a repeat is accepted and writes a **new log entry** but triggers no second downstream dispatch/store (AC-F0-04, BR-18/F0.7). **No fixed retention window is asserted** — an accepted limitation per the 2026-07-27 clarification, not an engineered SLA
+- [ ] T113 [P] [US4] Unit tests for `AllowedOriginsWhitelistStore` in `tests/Nabadat.IntegrationHub.UnitTests/Requests/AllowedOriginsWhitelistStoreTests.cs` — `Resolve(origin="https://evil.example", whitelist=["https://trusted.example"])` → refused. M-13 only **manages** this configuration for M-03's rendering endpoint to enforce at browser-load time; it never receives the browser's origin-bearing request (Clarifications 2026-07-27)
+- [ ] T114 [P] [US4] Unit tests for `SurveyLinkExpiryCalculator` in `tests/Nabadat.IntegrationHub.UnitTests/Requests/SurveyLinkExpiryCalculatorTests.cs` — `ComputeExpiry(issuedAt=T, override=null)` → `T + 24h` (F0.8), override honoured per FR-S2-10; time supplied by an injected `FakeTimeProvider`, never `DateTime.UtcNow`
 
 ### Red Checkpoint for User Story 4 🔴
 
-- [ ] T102 [US4] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`, verify red (compile error — no `Application/Requests/` types), paste the transcript, commit the red baseline. Non-parallel
+- [ ] T115R [US4] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`. Valid red: compile error (`Application/Requests/` absent) or assertion failure once stubbed. Paste the transcript and commit the red baseline before implementation. Non-parallel
 
 ### Implementation for User Story 4
 
-- [ ] T103 [US4] Implement `ResultCodeMapper` in `src/Nabadat.IntegrationHub/Application/Requests/ResultCodeMapper.cs` — the full FR-F0-03 catalogue with exact developer-oriented English message copy (no localisation)
-- [ ] T104 [US4] Implement `ParameterTypeValidator` + the 13 per-type validators in `Application/Requests/` — the type list is **closed**; Duration and Identifier must not exist anywhere (`[PO-G17]`)
-- [ ] T105 [US4] Implement `ChannelContractRequiredFieldChecker` in `Application/Requests/ChannelContractRequiredFieldChecker.cs` (BR-08)
-- [ ] T106 [US4] Implement `UnregisteredParameterStore` in `Application/Requests/UnregisteredParameterStore.cs` (BR-14/FR-F0-06)
-- [ ] T107 [US4] Implement `IdempotencyKeyResolver`, `AllowedOriginsWhitelistStore`, and `SurveyLinkExpiryCalculator` in `Application/Requests/` — no bounded idempotency retention index (BR-18, plan.md Complexity Tracking)
-- [ ] T108 [US4] Implement `RequestValidationPipeline` in `Application/Requests/RequestValidationPipeline.cs` — the ordered 8-step pipeline (TLS → auth → rate limit → payload size → channel resolution → channel-active → required params → type/validation), atomic short-circuit, `+ Interfaces/IRequestValidationPipeline.cs`
-- [ ] T109 [US4] Implement inbound authentication in `Api/Middleware/` — `X-Api-Key` header **and** OAuth bearer validation against hashed credentials, plus scope resolution per BR-26; a per-integration rate limiter (default 100 req/s, **Operations-configurable with no code change**, NFR-4) and the 2 MB payload cap enforced *before* any parameter parsing (NFR-3/VR-F11); plain HTTP refused (NFR-5)
-- [ ] T110 [US4] Implement `Api/Controllers/InboundScenarioController.cs` — the five SCN-01…05 endpoints per contracts/api-endpoints.md, each returning its normative artifact, plus the `IntegrationRequestLog` write path (every request logged with the full field list, FR-S8-05, incl. the rejection stage)
-- [ ] T111 [US4] Implement `Infrastructure/SurveyBuilderIntegration/RealSurveyRenderServiceAdapter.cs` — wraps M-01's real `ISurveyRenderService` for SCN-03, relaying the definition JSON unchanged as an opaque schema (CMC-02, research.md §4.2)
-- [ ] T112 [US4] API tests in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/InboundScenario*EndpointTests.cs` 🐳 — one class per scenario asserting the correct result code + the downstream hand-off stub call; plus the pipeline-order test (a request failing two checks asserts the **earlier** code wins), the idempotent-retry test (2 log entries, 1 downstream call), the rate-limit test (`429` on N+1), and the payload-cap test (`413` with zero parameter log detail)
-- [ ] T113 [US4] Scenario test `tests/Nabadat.IntegrationHub.IntegrationTests/Scenarios/InboundRequestLifecycleScenarioTests.cs` 🐳 — send → `202` → poll `GET /request-logs` until the entry appears (≤ 60s) → retry with the same `transaction_id` → assert no duplicate downstream dispatch and exactly 2 log entries → deactivate the channel → repeat → `409 E-1004`. Final aggregate: 2 accepted + 1 rejected log entry, 1 downstream dispatch
+- [ ] T116 [P] [US4] Implement the 13 per-type validators in `src/Nabadat.IntegrationHub/Application/Requests/TypeValidators/` — one type per file (Text, Number, Boolean, Email, Phone, List, Range, Date, DateTime, Currency, Percentage, Url, Geolocation), VR-T01…T13
+- [ ] T117 [US4] Implement `ParameterTypeValidator` in `src/Nabadat.IntegrationHub/Application/Requests/ParameterTypeValidator.cs` dispatching to T116 (depends on T116)
+- [ ] T118 [P] [US4] Implement `ResultCodeMapper` in `src/Nabadat.IntegrationHub/Application/Requests/ResultCodeMapper.cs` — the normative catalogue and exact message copy (F0.3)
+- [ ] T119 [P] [US4] Implement `ChannelContractRequiredFieldChecker` in `src/Nabadat.IntegrationHub/Application/Requests/ChannelContractRequiredFieldChecker.cs` (BR-08)
+- [ ] T120 [P] [US4] Implement `UnregisteredParameterStore` in `src/Nabadat.IntegrationHub/Application/Requests/UnregisteredParameterStore.cs` (BR-14)
+- [ ] T121 [P] [US4] Implement `IdempotencyKeyResolver` in `src/Nabadat.IntegrationHub/Application/Requests/IdempotencyKeyResolver.cs` (BR-18)
+- [ ] T122 [P] [US4] Implement `AllowedOriginsWhitelistStore` in `src/Nabadat.IntegrationHub/Application/Requests/AllowedOriginsWhitelistStore.cs` (FR-S2-10)
+- [ ] T123 [P] [US4] Implement `SurveyLinkExpiryCalculator` in `src/Nabadat.IntegrationHub/Application/Requests/SurveyLinkExpiryCalculator.cs` — injected `TimeProvider` (F0.8)
+- [ ] T124 [US4] Implement `RequestValidationPipeline` in `src/Nabadat.IntegrationHub/Application/Requests/RequestValidationPipeline.cs` — the ordered 8 steps, short-circuiting atomically on the first failure (depends on T117–T123)
+- [ ] T125 [US4] Implement the per-integration rate limiter (default **100 req/s**, Operations-configurable **without a code change**, NFR-4) and the **2 MB** payload cap enforced *before* any parameter parsing (NFR-3) in `src/Nabadat.IntegrationHub/Api/Middleware/` — `429 E-1429` and `413 E-1413` respectively
+- [ ] T126 [US4] Implement `IntegrationRequestLogWriter` in `src/Nabadat.IntegrationHub/Application/Requests/IntegrationRequestLogWriter.cs` — writes one `integration_request_logs` row per attempt (including retries and rejections) into the DB-04 monthly partition, storing unregistered pairs raw
+- [ ] T127 [US4] Implement the five scenario handlers in `src/Nabadat.IntegrationHub/Application/Requests/Scenarios/` — SCN-01 dispatch via `ISurveyDispatchGateway` → `202`; SCN-02 redirect link → `200` + `{survey_url, expires_at}`; SCN-03 JSON render via the **real** `RealSurveyRenderServiceAdapter` → `200` + survey definition JSON; SCN-04 iFrame embed → `200` + short-lived embed URL; SCN-05 response ingestion via `IResponseIngestionGateway` → `202`
+- [ ] T128 [US4] Implement `InboundScenarioController` in `src/Nabadat.IntegrationHub/Api/Controllers/InboundScenarioController.cs` — the five endpoints per contracts/api-endpoints.md (`POST /v1/survey-requests/{channelId}`, `POST /v1/survey-links/{channelId}`, `POST /v1/survey-definitions/{channelId}`, `GET /v1/survey-embed/{channelId}`, `POST /v1/responses/{channelId}`), each requiring its BR-26 auth scope; error envelope `{ result_code, message, request_id }` (depends on T124–T127)
+- [ ] T129 [US4] Map a downstream-module failure (M-02/M-03/M-04 unavailable) to `500 E-1500` with the retry-idempotent message — **never** surface the downstream error to the caller (F0.3, Error Handling)
 
-**Build gate**: `dotnet test tests/Nabadat.IntegrationHub.UnitTests` and `…IntegrationTests` green (Docker up). No frontend gate — this story ships no UI.
+### Integration & API / Scenario Tests for User Story 4 🐳
 
-**Checkpoint**: the module's core loop works end-to-end: a real request succeeds against US1–US3's configuration.
+- [ ] T130 [P] [US4] One API test class per scenario in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Inbound/` — `DispatchScenarioEndpointTests.cs`, `SurveyLinkScenarioEndpointTests.cs`, `SurveyDefinitionScenarioEndpointTests.cs`, `SurveyEmbedScenarioEndpointTests.cs`, `ResponseIngestionScenarioEndpointTests.cs` — each asserting the normative result code and the downstream hand-off stub call
+- [ ] T131 [P] [US4] Pipeline-order + guardrail tests in `tests/Nabadat.IntegrationHub.IntegrationTests/Services/Requests/PipelineOrderTests.cs` — a request crafted to fail two checks asserts the **earlier** step's code wins; N+1 requests in one second against a 100 req/s integration → `429`; a > 2 MB body → `413` **with zero parameter detail logged**; an inactive channel → `409 E-1004`
+- [ ] T132 [P] [US4] Idempotent-retry test in `tests/Nabadat.IntegrationHub.IntegrationTests/Services/Requests/IdempotentRetryTests.cs` — two identical requests (same `transaction_id`) → **both logged**, exactly one downstream dispatch/store call recorded (BR-18)
+- [ ] T133 [US4] Scenario test `InboundRequestLifecycleScenarioTests` in `tests/Nabadat.IntegrationHub.IntegrationTests/Scenarios/Requests/InboundRequestLifecycleScenarioTests.cs` — SCN-01: send → assert `202` → poll `GET /request-logs` until the entry appears (≤ 60 s) → retry the identical request → assert no duplicate downstream dispatch and exactly 2 log entries → deactivate the channel mid-test → repeat → assert `409 E-1004`. Final aggregate: 2 accepted + 1 rejected log entries, one downstream dispatch call total
+
+**Build gate (MANDATORY)**: `dotnet test tests/Nabadat.IntegrationHub.UnitTests` and `dotnet test tests/Nabadat.IntegrationHub.IntegrationTests` both green (Docker up). **No frontend build or E2E gate applies — this story ships no UI** (`e2e-tests: skipped`).
+
+**Checkpoint**: US1–US4 work independently. Requests now flow end to end; the module delivers value.
 
 ---
 
 ## Phase 7: User Story 5 — Monitor Integration Health and Investigate via Request Logs (Priority: P1)
 
-**Goal**: A Tenant IT Administrator sees integration health at a glance (SCR-01 tiles) and
-investigates failures in SCR-08 — status-class / integration / time-window filters, expandable
-detail with PII masking, and a masked export of the filtered view.
+**Goal**: A Tenant IT Administrator sees integration count, 24h traffic, and aggregate error rate at a
+glance, then drills into request logs — filtering by status class, integration, and time window
+(including Last hour) and expanding a row to see every parameter received (**PII-masked**) and the full
+response returned.
 
-**Independent Test**: Seed 6 integrations (1 inactive) with mixed traffic → `/integration-hub/integrations`
-shows "6 / 5 active", the correct 24h count, and a colour-coded error rate → `/integration-hub/logs`
-→ chips "Client errors" + one integration + "Last hour" → only matching rows, per-chip counts scoped
-to the window → expand a row → PII masked, full response shown.
+**Independent Test**: Seed 6 integrations (1 inactive) with mixed successful/failed requests → open
+`/integration-hub/integrations` → tiles read "6 / 5 active" with the correct 24h count and a correctly
+colour-coded error rate → open `/integration-hub/logs` → apply "Client errors" + a specific integration
++ "Last hour" → only matching rows remain and per-chip counts reflect the window → expand a row → PII
+renders masked and the full response detail shows.
 
-### Unit Tests for User Story 5 (write FIRST, must FAIL) ⚠️
+### Unit Tests for User Story 5 (REQUIRED — write FIRST, must FAIL) ⚠️
 
-- [ ] T114 [P] [US5] Unit tests for `IntegrationHealthTileCalculator` in `tests/Nabadat.IntegrationHub.UnitTests/Monitoring/IntegrationHealthTileCalculatorTests.cs` — `Compute(total=6, active=5, errors24h=0, requests24h=0)` → tile "6 / 5 active", error rate `"—"` (FR-S1-05)
-- [ ] T115 [P] [US5] Unit tests for `ErrorRateColourResolver` in `…/Monitoring/ErrorRateColourResolverTests.cs` — `0.008 → D2`, `0.03 → D3`, `0.08 → D4`, plus the exact-1% and exact-5% boundaries per FR-S1-06's documented convention
-- [ ] T116 [P] [US5] Unit tests for `IntegrationListFilter` in `…/Monitoring/IntegrationListFilterTests.cs` — `Filter(search="CRM", channel="CALL-CENTER")` → intersection only (AC-S1-02, AND)
-- [ ] T117 [P] [US5] Unit tests for `RequestLogFilterCombinator` in `…/Monitoring/RequestLogFilterCombinatorTests.cs` — status class + integration + window (incl. `LastHour`) AND-combined, counts scoped to the window (AC-S8-01)
-- [ ] T118 [P] [US5] Unit tests for `PiiMaskingFormatter` in `…/Monitoring/PiiMaskingFormatterTests.cs` — `Mask("+962770123456")` → `"+9627•••••312"`; `Mask("Mona Al-Rashid")` → `"M••••• A•-R•••••"`; identical output for list, detail, and export (FR-S8-03)
-- [ ] T119 [P] [US5] Unit tests for `RejectedRequestDetailProjection` in `…/Monitoring/RejectedRequestDetailProjectionTests.cs` — `rejectedAtStage="Authentication"` → parameters panel = `"— request rejected before parameter parsing"` (AC-S8-03)
+- [ ] T134 [P] [US5] Unit tests for `IntegrationHealthTileCalculator` in `tests/Nabadat.IntegrationHub.UnitTests/Monitoring/IntegrationHealthTileCalculatorTests.cs` — `Compute(total=6, active=5, errors24h=0, requests24h=0)` → tile `"6 / 5 active"` and error rate `"—"` when there is zero traffic (FR-S1-05); rolling-24h window driven by an injected `FakeTimeProvider`
+- [ ] T135 [P] [US5] Unit tests for `ErrorRateColourResolver` in `tests/Nabadat.IntegrationHub.UnitTests/Monitoring/ErrorRateColourResolverTests.cs` — `ColourFor(0.008)` → `D2`, `ColourFor(0.03)` → `D3`, `ColourFor(0.08)` → `D4`, plus the exact boundary cases at 1% and 5% per FR-S1-06's inclusive/exclusive convention documented in the calculator
+- [ ] T136 [P] [US5] Unit tests for `IntegrationListFilter` in `tests/Nabadat.IntegrationHub.UnitTests/Monitoring/IntegrationListFilterTests.cs` — `Filter(search="CRM", channel="CALL-CENTER", rows=[…])` → the **intersection** only (AC-S1-02, AND combination)
+- [ ] T137 [P] [US5] Unit tests for `RequestLogFilterCombinator` in `tests/Nabadat.IntegrationHub.UnitTests/Monitoring/RequestLogFilterCombinatorTests.cs` — `Combine(statusClass="4xx", integration="X", window="LastHour")` → AND-intersected result set **and counts scoped to the window** (AC-S8-01)
+- [ ] T138 [P] [US5] Unit tests for `PiiMaskingFormatter` in `tests/Nabadat.IntegrationHub.UnitTests/Monitoring/PiiMaskingFormatterTests.cs` — `Mask(mobile="+962770123456")` → `"+9627•••••312"`; `Mask(name="Mona Al-Rashid")` → `"M••••• A•-R•••••"` (the exact SRS patterns); identical output for list, detail, **and export** views (FR-S8-03)
+- [ ] T139 [P] [US5] Unit tests for `RejectedRequestDetailProjection` in `tests/Nabadat.IntegrationHub.UnitTests/Monitoring/RejectedRequestDetailProjectionTests.cs` — `Project(request, rejectedAtStage="Authentication")` → parameters panel = `"— request rejected before parameter parsing"`, never partial or garbled data (AC-S8-03)
 
 ### Red Checkpoint for User Story 5 🔴
 
-- [ ] T120 [US5] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`, verify red (no `Application/Monitoring/` types), paste the transcript, commit. Non-parallel
+- [ ] T140R [US5] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`. Valid red: compile error (`Application/Monitoring/` absent) or assertion failure once stubbed. Paste the transcript and commit the red baseline before implementation. Non-parallel
 
 ### Implementation for User Story 5
 
-- [ ] T121 [US5] Implement `IntegrationHealthTileCalculator` and `ErrorRateColourResolver` in `src/Nabadat.IntegrationHub/Application/Monitoring/` — the rolling-24h aggregates come from `integration_request_logs` (FR-S1-01/05/06)
-- [ ] T122 [US5] Implement `IntegrationListFilter` and `RequestLogFilterCombinator` in `Application/Monitoring/`
-- [ ] T123 [US5] Implement `PiiMaskingFormatter` and `RejectedRequestDetailProjection` in `Application/Monitoring/` — masking applied on the **server** so there is no unmasked-access code path in Phase 1 (NFR-9/SC-009)
-- [ ] T124 [US5] Implement `IRequestLogService`/`RequestLogService` + `Api/Controllers/RequestLogsController.cs` — `GET /request-logs` (cursor-paginated, newest-first, AND-combined filters per API-04), `GET /request-logs/{id}`, `GET /request-logs/export`; the whole controller gated on `m13.log.view` (**P-07-exclusive**, BR-24)
-- [ ] T125 [US5] Frontend: SCR-01 stat tiles (Integrations · Requests·24h · Error rate) with their sub-texts, plus live name search AND-combined with the service-channel filter, added to `pages/AllIntegrationsPage.tsx` — the filter row follows CLAUDE.md's toolbar shape (`sm:items-end`, bounded `sm:max-w-sm` search, `sm:w-48` selects, `flex flex-col gap-1.5` around each Select)
-- [ ] T126 [US5] Frontend: `components/RequestLogTable.tsx` + `pages/RequestLogsPage.tsx` — SCR-08 (FR-S8-01…05): status-class chips (All/2xx/4xx/5xx), integration select, time select defaulting to **Last 24 hours**, per-window counts; expandable row detail showing *Parameters received* (registered + unregistered) and *Response returned*; the masking/retention info alert; the auth-rejected notice; and **Export** of the current filtered view
-- [ ] T127 [US5] API tests in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/RequestLogsEndpointTests.cs` 🐳 — `GET /integrations` with computed tiles + FR-S1-02 filters; `GET /request-logs` AND-combined filters incl. `last_hour`, cursor-paginated newest-first; detail with masked PII; `export` masked identically; `GET /request-logs` **as P-01 → 403**
+- [ ] T141 [P] [US5] Implement `IntegrationHealthTileCalculator` in `src/Nabadat.IntegrationHub/Application/Monitoring/IntegrationHealthTileCalculator.cs` — injected `TimeProvider` for the rolling 24h window
+- [ ] T142 [P] [US5] Implement `ErrorRateColourResolver` in `src/Nabadat.IntegrationHub/Application/Monitoring/ErrorRateColourResolver.cs` — returns the **D-scale level**, not a hex; document the boundary convention in the file (FR-S1-06)
+- [ ] T143 [P] [US5] Implement `IntegrationListFilter` in `src/Nabadat.IntegrationHub/Application/Monitoring/IntegrationListFilter.cs`
+- [ ] T144 [P] [US5] Implement `RequestLogFilterCombinator` in `src/Nabadat.IntegrationHub/Application/Monitoring/RequestLogFilterCombinator.cs`
+- [ ] T145 [P] [US5] Implement `PiiMaskingFormatter` in `src/Nabadat.IntegrationHub/Application/Monitoring/PiiMaskingFormatter.cs` — the single masking path used by list, detail, and export alike; **zero unmasked-access code paths exist in Phase 1** (NFR-9)
+- [ ] T146 [P] [US5] Implement `RejectedRequestDetailProjection` in `src/Nabadat.IntegrationHub/Application/Monitoring/RejectedRequestDetailProjection.cs`
+- [ ] T147 [US5] Create the data-access port `IRequestLogStore` in `src/Nabadat.IntegrationHub/Application/Monitoring/Interfaces/IRequestLogStore.cs` + `RequestLogStore.cs` — cursor-only pagination (API-04), newest-first, querying across the monthly partitions
+- [ ] T148 [US5] Implement `RequestLogService` in `src/Nabadat.IntegrationHub/Application/Monitoring/RequestLogService.cs` — list/detail/export composing T144–T147, masking applied before the data leaves the service (depends on T144–T147)
+- [ ] T149 [P] [US5] Create the DTOs in `src/Nabadat.IntegrationHub/Api/Contracts/` — `RequestLogListItemResponse.cs`, `RequestLogDetailResponse.cs`, `IntegrationHealthTilesResponse.cs`, one type per file
+- [ ] T150 [US5] Implement `RequestLogsController` in `src/Nabadat.IntegrationHub/Api/Controllers/RequestLogsController.cs` — `GET /api/v1/integration-hub/request-logs` (AND-combined status-class + integration + time-window incl. `last_hour`, cursor-paginated newest-first), `GET …/{id}`, `GET …/export`; gated on `m13.log.view` so **P-01 receives 403** (logs are P-07-exclusive) (depends on T148, T149)
+- [ ] T151 [US5] Extend `GET /api/v1/integration-hub/integrations` in `IntegrationsController` to return the computed health tiles + FR-S1-02 filters (depends on T141–T143)
+- [ ] T152 [P] [US5] Implement `useRequestLogs` in `frontend/src/features/integration-hub/hooks/useRequestLogs.ts`
+- [ ] T153 [US5] Add the **SCR-01 stat tiles + error-rate badges** to `frontend/src/features/integration-hub/pages/AllIntegrationsPage.tsx` — tiles for total/active and rolling-24h traffic, an error-rate badge coloured on the **D-scale** (`< 1%` D2 · `1–5%` D3 · `> 5%` D4) **paired with an icon so colour is never the only indicator**, `"—"` when there is no traffic, and an AND-combined search + channel filter row
+- [ ] T154 [US5] Build **SCR-08** `RequestLogsPage` in `frontend/src/features/integration-hub/pages/RequestLogsPage.tsx` — status-class filter chips with per-chip counts, integration select, time-window select (incl. Last hour), a newest-first cursor-paginated table whose HTTP-status badges use D2/D4/D5, and the **access-denied state for P-01** (no `m13.log.view` grant). The **Time** column stays `text-start` with an inner `<span dir="ltr">` — never `text-end`
+- [ ] T155 [US5] Build the expandable log-detail panel `frontend/src/features/integration-hub/components/RequestLogDetail.tsx` — every received parameter (PII **masked**, unregistered pairs flagged), the full response returned, and the `"— request rejected before parameter parsing"` notice for auth-rejected requests; use the `grid-rows-[0fr]`/`grid-rows-[1fr]` expand animation, never `{condition && <div>}`
 
-> **Scenario test**: spec.md declares `scenario-test: not-needed` for US5.
+### Integration & API Tests for User Story 5 🐳
+
+- [ ] T156 [P] [US5] API test for `GET /api/v1/integration-hub/integrations` in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Monitoring/IntegrationHealthEndpointTests.cs` — computed tiles + FR-S1-02 filters
+- [ ] T157 [P] [US5] API tests for `GET /api/v1/integration-hub/request-logs` in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Monitoring/RequestLogsEndpointTests.cs` — AND-combined status-class + integration + `last_hour` filters, cursor-paginated newest-first; detail returns full parameter + response data with PII masked; **as a P-01 → 403** (P-07-exclusive)
+- [ ] T158 [P] [US5] API test for `GET /api/v1/integration-hub/request-logs/export` in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Monitoring/RequestLogExportEndpointTests.cs` — exports exactly the filtered view with PII masked **identically to the on-screen view** (FR-S8-04, BR-14)
+
+> `scenario-test: not-needed` per spec.md US5 — read-only single-endpoint views; the "appears in logs
+> within 60 s" cross-story assertion lives in US4's scenario test.
 
 ### E2E (Browser) Tests for User Story 5 🎭
 
-- [ ] T128 [US5] E2E tests in `tests/Nabadat.E2ETests/IntegrationHub/IntegrationMonitoringTests.cs` (`Integrations_stat_tiles_reflect_total_active_and_traffic`, `…_search_and_channel_filter_combine_with_AND`, `…_new_integration_shows_zero_traffic_and_dash_rate`) and `RequestLogsTests.cs` (`RequestLogs_filters_combine_with_AND_and_counts_reflect_window`, `…_expanded_row_masks_pii_in_exact_format`, `…_auth_rejected_row_shows_rejected_before_parsing_notice`, `…_export_masks_pii_identically_to_screen`, `…_cx_manager_role_is_denied_access`). Update `COVERAGE.md`
+- [ ] T159 [P] [US5] E2E tests in `tests/Nabadat.E2ETests/IntegrationHub/IntegrationMonitoringTests.cs` — `Integrations_stat_tiles_reflect_total_active_and_traffic` (AC-S1-01), `Integrations_search_and_channel_filter_combine_with_AND` (AC-S1-02), `Integrations_new_integration_shows_zero_traffic_and_dash_rate` (AC-S1-03)
+- [ ] T160 [P] [US5] E2E tests in `tests/Nabadat.E2ETests/IntegrationHub/RequestLogsTests.cs` — `RequestLogs_filters_combine_with_AND_and_counts_reflect_window` (AC-S8-01), `RequestLogs_expanded_row_masks_pii_in_exact_format` (AC-S8-02), `RequestLogs_auth_rejected_row_shows_rejected_before_parsing_notice` (AC-S8-03), `RequestLogs_export_masks_pii_identically_to_screen` (FR-S8-04), `RequestLogs_cx_manager_role_is_denied_access` (Permissions Matrix); update `COVERAGE.md`
 
-**Build gate**: unit + integration green · `npm run build` green · `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~IntegrationMonitoringTests|FullyQualifiedName~RequestLogsTests"` green.
+**Build gate (MANDATORY)**: unit + integration green; `npm run build` green; `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~IntegrationMonitoringTests"` and `--filter "FullyQualifiedName~RequestLogsTests"` green.
 
-**Checkpoint**: the P1 set (US1–US5) is complete — configure, provision, call, and observe.
+**Checkpoint**: all five P1 stories are complete — the module's core loop is observable end to end.
 
 ### Click-through Parity for User Story 5 🎨
 
-> Owner: the frontend developer, run manually. Same two preconditions as T042P.
+> Owner: the frontend developer, run manually. Preconditions: SCR-01 tiles and SCR-08 built
+> click-through-blind (a ported page is `NOT AUDITED`, not clean); click-through served + stack signed in.
 
-- [ ] T128P [US5] Run `/clickthrough-parity 006-integration-hub phase 7` over `/integration-hub/integrations` (tiles + filters) and `/integration-hub/logs` and triage the report. Apply accepted defects with `--fix`; escalate **Needs discussion** items. Record the result in `route-map.md`
+- [ ] T161P [US5] Run `/clickthrough-parity 006-integration-hub phase 7` over `/integration-hub/integrations` (stat tiles + list) and `/integration-hub/logs` (SCR-08 incl. the expanded row detail) and triage the report. Apply accepted defects with `--fix`; escalate every **Needs discussion** item — in particular any difference in the masked-PII rendering format, which is normative copy and must not be silently `--fix`ed — to the design owner. Record the result in `.claude/skills/clickthrough-parity/route-map.md`
 
 ---
 
 ## Phase 8: User Story 6 — Manage Parameter Mappings Inline (Priority: P2)
 
-**Goal**: A CX Manager translates raw backend values into bilingual display values that resolve at
-**read time**, with unmapped incoming values surfaced in a 7-day queue with one-click mapping.
+**Goal**: For any mapping-enabled parameter, a CX Manager translates raw backend values (`S001`) into
+bilingual display values ("Visa Request" / "طلب فيزا"). Mappings resolve at **read time**, so an edit or
+delete retroactively relabels historical data by design. Unmapped incoming values are never rejected —
+stored raw and surfaced in a 7-day queue with one-click mapping.
 
 **Independent Test**: Pick a mapping-enabled parameter with no mappings → send a US4 request carrying
-`S014` → `/integration-hub/mappings` → the unmapped-values alert lists `S014` → **Map now** pre-fills
-a draft row → fill EN/AR → **Save** → the mapping is Active and every historical report renders the
-new label immediately.
+`S014` → `/integration-hub/mappings` shows `S014` in the unmapped-values alert → **Map now** pre-fills a
+draft row → fill EN/AR → **Save** → the mapping goes Active and every historical and future report
+renders the new label immediately.
 
-### Unit Tests for User Story 6 (write FIRST, must FAIL) ⚠️
+### Unit Tests for User Story 6 (REQUIRED — write FIRST, must FAIL) ⚠️
 
-- [ ] T129 [P] [US6] Unit tests for `MappingSourceValueUniquenessValidator` in `tests/Nabadat.IntegrationHub.UnitTests/Mappings/MappingSourceValueUniquenessValidatorTests.cs` — required, unique within the parameter **case-insensitively** (VR-F08)
-- [ ] T130 [P] [US6] Unit tests for `MappingResolver`, `MappingEnabledParameterFilter`, and `UnmappedValueQueueService` in `…/Mappings/` — read-time resolution (an edited label retroactively relabels historical values, FR-F0-05); only BR-27 mapping-enabled parameters are listed (FR-S7-01); the queue holds a 7-day occurrence window and a deleted-then-re-received value re-enters it
+- [ ] T162 [P] [US6] Unit tests for `MappingSourceValueUniquenessValidator` in `tests/Nabadat.IntegrationHub.UnitTests/Mappings/MappingSourceValueUniquenessValidatorTests.cs` — `Validate(existing=["S001"], newValue="S001")` → `Invalid("This source value already has a mapping")`; `Validate(existing=["S001"], newValue="s001")` → `Invalid` (**case-insensitive**, VR-F08)
+- [ ] T163 [P] [US6] Unit tests for `UnmappedValueQueueService` in `tests/Nabadat.IntegrationHub.UnitTests/Mappings/UnmappedValueQueueServiceTests.cs` — `Enqueue(value="S014", firstSeenAt=now)` → in the 7-day queue; `Enqueue(value="S014", firstSeenAt=now-8days)` → absent (window expired, no repeat occurrence); `Dequeue(value="S014", mappingCreated=true)` → removed. Window driven by `FakeTimeProvider`
+- [ ] T164 [P] [US6] Unit tests for `MappingResolver` in `tests/Nabadat.IntegrationHub.UnitTests/Mappings/MappingResolverTests.cs` — `Resolve("s001", {S001:{en,ar}})` resolves regardless of incoming casing; `Resolve("S014", {})` falls back to the **raw** value with original casing preserved for both EN and AR (F0.5); `Resolve("S001", mappings updated AFTER the response was stored)` → returns the **new** label (retroactive read-time resolution, BR-13)
+- [ ] T165 [P] [US6] Unit tests for `MappingEnabledParameterFilter` in `tests/Nabadat.IntegrationHub.UnitTests/Mappings/MappingEnabledParameterFilterTests.cs` — `FilterMappingEnabled([{mappingSupport:true},{mappingSupport:false}])` → only the first is offered (BR-27)
 
 ### Red Checkpoint for User Story 6 🔴
 
-- [ ] T131 [US6] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`, verify red (no `Application/Mappings/` types), paste the transcript, commit. Non-parallel
+- [ ] T166R [US6] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`. Valid red: compile error (`Application/Mappings/` absent) or assertion failure once stubbed. Paste the transcript and commit the red baseline before implementation. Non-parallel
 
 ### Implementation for User Story 6
 
-- [ ] T132 [US6] Implement `Application/Mappings/` — `MappingSourceValueUniquenessValidator`, `MappingResolver`, `MappingEnabledParameterFilter`, `UnmappedValueQueueService`, `IParameterMappingService`/`ParameterMappingService` — and `Api/Controllers/ParameterMappingsController.cs`: `GET /parameters/{id}/mappings`, `GET .../unmapped-queue`, `POST`/`PUT`/`DELETE .../mappings[/{mappingId}]`. Audit `mapping.added` / `mapping.edited` / `mapping.deleted`
-- [ ] T133 [US6] Frontend: `components/ParameterMappingTable.tsx` + `pages/ParameterMappingsPage.tsx` — SCR-07 (FR-S7-01…04): the mapping-enabled parameter selector, the unmapped-values **warning alert** with **Map now** pre-fill (hidden when the queue is empty), the mapping table with an inline **Draft** add-row (`Draft` badge + Save, RTL Arabic display input), row edit, delete behind **Dialog D-7**, the source-system badge, and the footer information line
-- [ ] T134 [US6] API tests in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/ParameterMappingsEndpointTests.cs` 🐳 (CRUD + queue + VR-F08 uniqueness + `m13.mapping.manage` enforcement) and the scenario test `Scenarios/MappingReadTimeResolutionScenarioTests.cs` 🐳 — a value arrives unmapped → appears in the queue → is mapped → the same historical row now resolves to the new label; editing the label relabels it again
+- [ ] T167 [P] [US6] Implement `MappingSourceValueUniquenessValidator` in `src/Nabadat.IntegrationHub/Application/Mappings/MappingSourceValueUniquenessValidator.cs` (VR-F08)
+- [ ] T168 [P] [US6] Implement `MappingEnabledParameterFilter` in `src/Nabadat.IntegrationHub/Application/Mappings/MappingEnabledParameterFilter.cs` (BR-27)
+- [ ] T169 [P] [US6] Implement `MappingResolver` in `src/Nabadat.IntegrationHub/Application/Mappings/MappingResolver.cs` — case-insensitive read-time lookup with raw-value fallback (F0.5)
+- [ ] T170 [US6] Implement `UnmappedValueQueueService` in `src/Nabadat.IntegrationHub/Application/Mappings/UnmappedValueQueueService.cs` over `unmapped_value_occurrences`, injected `TimeProvider` for the 7-day window; wire the write side into `RequestValidationPipeline` so unmapped values are recorded at ingestion
+- [ ] T171 [US6] Create the data-access port `IParameterMappingStore` in `src/Nabadat.IntegrationHub/Application/Mappings/Interfaces/IParameterMappingStore.cs` + `ParameterMappingStore.cs`
+- [ ] T172 [US6] Implement `ParameterMappingService` in `src/Nabadat.IntegrationHub/Application/Mappings/ParameterMappingService.cs` — add/edit/delete/list composing T167–T171; **no version-history or restore surface exists** — the platform audit trail is the only change record (BR-13, `[PO-G12]`) (depends on T167–T171)
+- [ ] T173 [P] [US6] Create the DTOs in `src/Nabadat.IntegrationHub/Api/Contracts/` — `CreateMappingRequest.cs`, `UpdateMappingRequest.cs`, `MappingResponse.cs`, `UnmappedQueueResponse.cs`, one type per file
+- [ ] T174 [US6] Implement `ParameterMappingsController` in `src/Nabadat.IntegrationHub/Api/Controllers/ParameterMappingsController.cs` — `GET`/`POST` `/api/v1/integration-hub/parameters/{id}/mappings`, `PUT`/`DELETE …/{mappingId}`, `GET …/mappings/unmapped-queue` (depends on T172, T173)
+- [ ] T175 [US6] Emit `mapping.added` / `mapping.edited` / `mapping.deleted` audit events from `Application/Events/` (BR-21)
+- [ ] T176 [P] [US6] Implement `useMappings` in `frontend/src/features/integration-hub/hooks/useMappings.ts`
+- [ ] T177 [US6] Build **SCR-07** `ParameterMappingsPage` in `frontend/src/features/integration-hub/pages/ParameterMappingsPage.tsx` — a parameter selector offering **only mapping-enabled parameters**, each rendered `"Name — api_field (n values)"` (FR-S7-01); the unmapped-values alert with **Map now**; and the mappings table. **No version-history or restore control anywhere** (BR-13)
+- [ ] T178 [US6] Build the inline editor `frontend/src/features/integration-hub/components/MappingTableRow.tsx` — **Add value** appends a row with a "Draft" status badge and a **Save** button requiring a non-empty, parameter-unique source value; **Delete** opens Dialog **D-7** and takes effect at read time immediately. AR display values render RTL correctly in the table cell; give the inline value input an `aria-label` mirroring its placeholder (the sanctioned label-less exception for a chip/inline adder)
+
+### Integration & API / Scenario Tests for User Story 6 🐳
+
+- [ ] T179 [P] [US6] API tests for the mapping CRUD routes in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Mappings/ParameterMappingEndpointTests.cs` — `POST` add → 201 + `mapping.added`; duplicate source value within the parameter → 409 (VR-F08); `PUT` edit → 200 + `mapping.edited` and a **subsequent read of historical data reflects the new label**; `DELETE` → 200 + `mapping.deleted` and later reads of that source value fall back to raw
+- [ ] T180 [P] [US6] API test for `GET …/parameters/{id}/mappings/unmapped-queue` in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Mappings/UnmappedQueueEndpointTests.cs` — returns values received in the trailing 7 days with no mapping
+- [ ] T181 [US6] Scenario test `MappingReadTimeResolutionScenarioTests` in `tests/Nabadat.IntegrationHub.IntegrationTests/Scenarios/Mappings/MappingReadTimeResolutionScenarioTests.cs` — send a US4 request carrying unmapped `S014` → `GET` the queue (assert present) → `POST` a mapping → `GET` the queue (assert absent) → re-fetch the **earlier** request's log/report projection and assert it now renders the new display label, proving retroactive read-time resolution (F0.5). Final aggregate: exactly one `mapping.added` event and the historical projection updated
 
 ### E2E (Browser) Tests for User Story 6 🎭
 
-- [ ] T135 [US6] E2E tests in `tests/Nabadat.E2ETests/IntegrationHub/ParameterMappingsTests.cs` — the unmapped-queue → **Map now** → draft-row → save flow, inline edit, and the D-7 delete confirmation. Update `COVERAGE.md`
+- [ ] T182 [P] [US6] E2E tests in `tests/Nabadat.E2ETests/IntegrationHub/ParameterMappingsTests.cs` — `Mappings_unmapped_value_alert_shows_and_map_now_prefills_draft` (AC-S7-03), `Mappings_inline_add_row_requires_unique_nonempty_source_value` (VR-F08), `Mappings_delete_shows_confirmation_and_takes_effect_immediately` (D-7), `Mappings_no_version_history_or_restore_control_exists_anywhere` (BR-13), `Mappings_parameter_selector_only_lists_mapping_enabled_parameters` (FR-S7-01); update `COVERAGE.md`
 
-**Build gate**: unit + integration green · `npm run build` green · `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~ParameterMappingsTests"` green.
+**Build gate (MANDATORY)**: unit + integration green; `npm run build` green; `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~ParameterMappingsTests"` green.
 
 **Checkpoint**: US1–US6 all work independently.
 
 ### Click-through Parity for User Story 6 🎨
 
-> Owner: the frontend developer, run manually. Same two preconditions as T042P.
+> Owner: the frontend developer, run manually. Preconditions: SCR-07 built click-through-blind
+> (a ported page is `NOT AUDITED`, not clean); click-through served + dev stack signed in.
 
-- [ ] T135P [US6] Run `/clickthrough-parity 006-integration-hub phase 8` over `/integration-hub/mappings` and triage the report. Apply accepted defects with `--fix`; escalate **Needs discussion** items. Record the result in `route-map.md`
+- [ ] T183P [US6] Run `/clickthrough-parity 006-integration-hub phase 8` over `/integration-hub/mappings` (the inline add/edit/delete portion) and triage the report. Apply accepted defects with `--fix`; escalate every **Needs discussion** item to the design owner. Record the result in `.claude/skills/clickthrough-parity/route-map.md`
 
 ---
 
 ## Phase 9: User Story 7 — Bulk Import, Export, and Replace-All Parameter Mappings via Excel (Priority: P2)
 
-**Goal**: Excel export (`source_value`, `display_en`, `display_ar`), strictly all-or-nothing import
-in Merge or Replace-all mode with a row-level validation report, and an irreversible Replace-all
-behind an explicit confirmation naming the consequence.
+**Goal**: A CX Manager exports a parameter's mappings to Excel (`source_value`, `display_en`,
+`display_ar`), edits offline, and re-imports in **Merge** (default) or **Replace-all** mode. Import is
+strictly all-or-nothing behind a row-level validation report; Replace-all is irreversible and requires an
+explicit confirmation naming the consequence.
 
-**Independent Test**: Export → introduce one invalid row → **Import from Excel** in Merge mode →
-the import is rejected wholesale with a row-level report and **nothing** is applied → fix and
-re-import successfully → **Replace all mappings…** → confirm D-5 → all prior mappings are gone.
+**Independent Test**: Export a parameter's mappings → introduce one invalid row → **Import from Excel** →
+Merge → the import is rejected wholesale with a row-level report naming the bad row and reason, and **no**
+valid row was applied. Fix and re-import successfully. Then **Replace all mappings…** → confirm the
+destructive dialog → all prior mappings are gone, replaced by the imported set.
 
-### Unit Tests for User Story 7 (write FIRST, must FAIL) ⚠️
+### Unit Tests for User Story 7 (REQUIRED — write FIRST, must FAIL) ⚠️
 
-- [ ] T136 [P] [US7] Unit tests for `ExcelMappingExporter` and `ExcelMappingImportValidator` in `tests/Nabadat.IntegrationHub.UnitTests/Mappings/` — export produces the header row + one data row per mapping; `Validate(rows=[214 valid, 1 empty source_value])` → `Invalid`, report `[{row: 215, column: "source_value", reason: "required"}]`, nothing applied (AC-S7-01); an in-file duplicate `source_value` → rejected with the duplicate named (VR-F09)
-- [ ] T137 [P] [US7] Unit tests for `ExcelMappingImportModeApplier`, `ImportRowCountGuard`, and `MappingsPerParameterGuard` in `…/Mappings/` — `Apply(Merge, existing=[S001,S002], imported=[S001(new),S003])` → `[S001(new), S002, S003]`; `Apply(ReplaceAll, …, imported=[S003])` → `[S003]`; `GuardRowCount(10001)` → rejected **before parsing**; `GuardMappingCount(existing=4999, importing=2)` → rejected (NFR-16)
+- [ ] T184 [P] [US7] Unit tests for `ExcelMappingExporter` in `tests/Nabadat.IntegrationHub.UnitTests/Mappings/ExcelMappingExporterTests.cs` — `Export([{S001,"Visa Request","طلب فيزا"}])` → a workbook with header row `source_value, display_en, display_ar` + one data row (FR-S7-05)
+- [ ] T185 [P] [US7] Unit tests for `ExcelMappingImportValidator` in `tests/Nabadat.IntegrationHub.UnitTests/Mappings/ExcelMappingImportValidatorTests.cs` — `Validate(rows=[214 valid, 1 with empty source_value])` → `Invalid` with report `[{row:215, column:"source_value", reason:"required"}]` and **nothing applied** (AC-S7-01); `Validate([{S001,…},{S001,…}])` → `Invalid` naming the in-file duplicate (VR-F09)
+- [ ] T186 [P] [US7] Unit tests for `ExcelMappingImportModeApplier` in `tests/Nabadat.IntegrationHub.UnitTests/Mappings/ExcelMappingImportModeApplierTests.cs` — `Apply(mode=Merge, existing=[S001,S002], imported=[S001(new label),S003])` → `[S001(new label), S002, S003]` (upsert + preserve untouched); `Apply(mode=ReplaceAll, existing=[S001,S002], imported=[S003])` → `[S003]` only
+- [ ] T187 [P] [US7] Unit tests for `ImportRowCountGuard` in `tests/Nabadat.IntegrationHub.UnitTests/Mappings/ImportRowCountGuardTests.cs` — `GuardRowCount(10001)` → rejected **before any row is parsed** (NFR-16)
+- [ ] T188 [P] [US7] Unit tests for `MappingsPerParameterGuard` in `tests/Nabadat.IntegrationHub.UnitTests/Mappings/MappingsPerParameterGuardTests.cs` — `GuardMappingCount(existing=4999, importing=2)` → rejected (would exceed the 5,000-per-parameter ceiling, NFR-16)
 
 ### Red Checkpoint for User Story 7 🔴
 
-- [ ] T138 [US7] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`, verify red, paste the transcript, commit. Non-parallel
+- [ ] T189R [US7] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`. Valid red: compile error or assertion failure once the Excel types are stubbed. Paste the transcript and commit the red baseline before implementation. Non-parallel
 
 ### Implementation for User Story 7
 
-- [ ] T139 [US7] Implement the Excel types in `Application/Mappings/` using **ClosedXML** (plan.md Primary Dependencies) and add `GET /parameters/{id}/mappings/export`, `POST .../mappings/import`, and `POST .../mappings/replace-all` to `ParameterMappingsController` — import is transactional and all-or-nothing; audit `mapping.import` (mode + row count) and `mapping.replace_all` (rows removed/added). Replace-all requires `m13.mapping.replace`
-- [ ] T140 [US7] Frontend: SCR-07 **Dialog D-4** (import — template-columns copy, Merge/Replace-all radio with **Merge pre-selected**, row-level failure report) and **Dialog D-5** (replace-all — names the exact current mapping count and the parameter, states it cannot be undone, destructive filled confirm), plus the **Export to Excel** action and the footer **Replace all mappings…** button
-- [ ] T141 [US7] API tests in `…/Endpoints/ParameterMappingsImportEndpointTests.cs` 🐳 (export shape; merge import → 200 + upserts + `mapping.import`; one invalid row → 400/422 + report + a follow-up `GET` proving zero changes; replace-all → prior set gone + `mapping.replace_all`; 10,001 rows → 400 before parsing), the scenario test `Scenarios/BulkMappingReplaceScenarioTests.cs` 🐳, **and** the additional `[TestMethod]` blocks in `tests/Nabadat.E2ETests/IntegrationHub/ParameterMappingsTests.cs` 🎭 — `Mappings_export_downloads_three_ratified_columns`, `…_import_all_or_nothing_shows_row_level_report_on_failure`, `…_import_dialog_defaults_to_merge_mode`, `…_replace_all_confirmation_names_count_and_is_irreversible`, `…_import_over_10000_rows_is_rejected`
+- [ ] T190 [P] [US7] Implement `ExcelMappingExporter` in `src/Nabadat.IntegrationHub/Application/Mappings/ExcelMappingExporter.cs` using ClosedXML — exactly the three ratified columns
+- [ ] T191 [P] [US7] Implement `ImportRowCountGuard` in `src/Nabadat.IntegrationHub/Application/Mappings/ImportRowCountGuard.cs` (NFR-16)
+- [ ] T192 [P] [US7] Implement `MappingsPerParameterGuard` in `src/Nabadat.IntegrationHub/Application/Mappings/MappingsPerParameterGuard.cs` (NFR-16)
+- [ ] T193 [US7] Implement `ExcelMappingImportValidator` in `src/Nabadat.IntegrationHub/Application/Mappings/ExcelMappingImportValidator.cs` — required columns, non-empty `source_value`, no in-file duplicates, producing the row-level report; **all-or-nothing gate** (VR-F09)
+- [ ] T194 [US7] Implement `ExcelMappingImportModeApplier` in `src/Nabadat.IntegrationHub/Application/Mappings/ExcelMappingImportModeApplier.cs` — Merge upsert vs Replace-all delete-then-insert, the whole apply wrapped in one `ITenantDbContext.ExecuteAsync` so a partial import is impossible (depends on T193)
+- [ ] T195 [US7] Add `POST …/parameters/{id}/mappings/import`, `GET …/mappings/export`, and the direct `POST …/mappings/replace-all` routes to `ParameterMappingsController`, emitting the `mapping.import` (row count + mode) and `mapping.replace_all` (rows removed/added) audit events (depends on T190–T194)
+- [ ] T196 [US7] Build the Excel toolbar + Dialog **D-4** in `frontend/src/features/integration-hub/components/MappingImportDialog.tsx` — **Merge with existing pre-selected** as the default non-destructive mode, a file picker, and the row-level failure report rendered on rejection; `sm:max-w-lg` with the capped-height scroll pattern
+- [ ] T197 [US7] Build Dialog **D-5** in `frontend/src/features/integration-hub/components/ReplaceAllMappingsDialog.tsx` — the confirmation text names the **exact current mapping count** and the parameter and states the action **cannot be undone**; the confirm action is `variant="destructive"`, Cancel is `variant="outline"`
 
-**Build gate**: unit + integration green · `npm run build` green · `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~ParameterMappingsTests"` green.
+### Integration & API / Scenario Tests for User Story 7 🐳
+
+- [ ] T198 [P] [US7] API tests for import/export in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Mappings/MappingImportExportEndpointTests.cs` — `GET …/export` returns the 3-column file; `POST …/import {mode:"merge"}` valid → 200 upserted + `mapping.import` audit with row count + mode; one invalid row → 400/422 with the row-level report and a follow-up `GET` proving **zero** mappings changed; `{mode:"replace_all"}` → 200 with priors gone + `mapping.replace_all` audit; 10,001 rows → 400 with before/after `GET` showing zero change (NFR-16)
+- [ ] T199 [US7] Scenario test `BulkMappingReplaceScenarioTests` in `tests/Nabadat.IntegrationHub.IntegrationTests/Scenarios/Mappings/BulkMappingReplaceScenarioTests.cs` — `GET` export (baseline) → `POST` import merge with one invalid row → assert mappings **unchanged** (all-or-nothing held) → fix → `POST` import again → assert applied → `POST` import `replace_all` with a fresh set → assert the prior merged set is entirely gone. Final aggregate: one `mapping.import` and one `mapping.replace_all` event with counts matching the actual before/after diff
+
+### E2E (Browser) Tests for User Story 7 🎭
+
+- [ ] T200 [P] [US7] Additional `[TestMethod]` blocks in `tests/Nabadat.E2ETests/IntegrationHub/ParameterMappingsTests.cs` (**same file as US6**) — `Mappings_export_downloads_three_ratified_columns` (FR-S7-05), `Mappings_import_all_or_nothing_shows_row_level_report_on_failure` (AC-S7-01), `Mappings_import_dialog_defaults_to_merge_mode` (D-4), `Mappings_replace_all_confirmation_names_count_and_is_irreversible` (D-5), `Mappings_import_over_10000_rows_is_rejected` (NFR-16); update `COVERAGE.md`
+
+**Build gate (MANDATORY)**: unit + integration green; `npm run build` green; `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~ParameterMappingsTests"` green.
 
 **Checkpoint**: US1–US7 all work independently.
 
 ### Click-through Parity for User Story 7 🎨
 
-> Owner: the frontend developer, run manually. Same two preconditions as T042P.
+> Owner: the frontend developer, run manually. Preconditions: the SCR-07 Excel surface built
+> click-through-blind; click-through served + dev stack signed in.
 
-- [ ] T141P [US7] Run `/clickthrough-parity 006-integration-hub phase 9` over `/integration-hub/mappings` (the D-4/D-5 dialogs and the export/replace-all toolbar) and triage the report. Record the result in `route-map.md`
+- [ ] T201P [US7] Run `/clickthrough-parity 006-integration-hub phase 9` over `/integration-hub/mappings` (the Excel import/export/replace-all surface: toolbar, D-4, D-5) and triage the report. Apply accepted defects with `--fix`; escalate every **Needs discussion** item — the D-5 destructive-confirmation copy is normative and must not be silently `--fix`ed — to the design owner. Record the result in `.claude/skills/clickthrough-parity/route-map.md`
 
 ---
 
 ## Phase 10: User Story 8 — Manage Credential Lifecycle (Priority: P2)
 
-**Goal**: Ongoing revoke/regenerate outside the onboarding wizard, plus the invariants that guard
-the ratified field-set removals — no sandbox, no expiry, no IP allow-list, no grant-type or
-token-lifetime fields — and scope-limited endpoint access.
+**Goal**: Beyond US3's initial generation, a Tenant IT Administrator revokes a compromised key
+immediately or generates a replacement (which implicitly revokes the prior key). No sandbox/test
+credentials, no expiry fields, no IP allow-lists; secrets are shown exactly once and never retrievable.
 
-**Independent Test**: On an integration with an active API key, open Step 2 in edit mode → **Revoke**
-→ confirm D-3 → a caller request with that key returns `401 E-1401`. Generate a new key → the old
-one still fails identically while the new one succeeds.
+**Independent Test**: On an integration with an active API key, open Step 2 of the edit wizard →
+**Revoke** → confirm Dialog D-3 (which names the masked key and the consequence) → the key is revoked
+immediately and a caller request with it returns `401 E-1401`. Generate a new key and verify the old one
+still fails identically while the new one succeeds.
 
-### Unit Tests for User Story 8 (write FIRST, must FAIL) ⚠️
+### Unit Tests for User Story 8 (REQUIRED — write FIRST, must FAIL) ⚠️
 
-- [ ] T142 [P] [US8] Unit tests for `OAuthScopeEnforcer` and `CredentialFieldSetGuard` in `tests/Nabadat.IntegrationHub.UnitTests/Integrations/` — `EnforceScope(["survey-links:read"], SCN-01)` → rejected; `EnforceScope(["survey-requests:write"], SCN-01)` → allowed (BR-26); `AssertFieldSet(apiKeyFields)` contains no `expiry`/`sandbox`/`allowedSourceIps`; `AssertFieldSet(oauthFields)` contains no `grantType`/`tokenLifetime` (`[PO-G13]`, BR-17). Extends `CredentialRevocationServiceTests` with the standalone revoke-without-regeneration flow and the "no un-revoke" invariant
+- [ ] T202 [P] [US8] Extend `tests/Nabadat.IntegrationHub.UnitTests/Integrations/CredentialRevocationServiceTests.cs` with the standalone revoke-without-regeneration flow and the **no-un-revoke invariant** — `Revoke(K1)` → `K1.status = Revoked`; `Attempt(Unrevoke, K1)` → **no such operation exists** (compile-time / API-surface absence, not a runtime rejection); `Generate(newKey=K2, whileActive=K1)` → K1 Revoked, K2 Active with **no separate confirmation** for K1 (BR-16)
+- [ ] T203 [P] [US8] Unit tests for `OAuthScopeEnforcer` in `tests/Nabadat.IntegrationHub.UnitTests/Integrations/OAuthScopeEnforcerTests.cs` — `EnforceScope(token.scopes=["survey-links:read"], calledEndpoint=SCN-01)` → rejected (insufficient scope, mapped to `401 E-1401` at the pipeline's authentication step); `EnforceScope(["survey-requests:write"], SCN-01)` → allowed; one case per BR-26 scenario→scope pair
+- [ ] T204 [P] [US8] Unit tests for `CredentialFieldSetGuard` in `tests/Nabadat.IntegrationHub.UnitTests/Integrations/CredentialFieldSetGuardTests.cs` — `AssertFieldSet(apiKeyFields)` does **not** contain `expiry`, `sandbox`, `allowedSourceIps`; `AssertFieldSet(oauthFields)` does **not** contain `grantType`, `tokenLifetime`. This guards a ratified removal against future accidental regression (`[PO-G13]`, BR-17)
 
 ### Red Checkpoint for User Story 8 🔴
 
-- [ ] T143 [US8] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`, verify red, paste the transcript, commit. Non-parallel
+- [ ] T205R [US8] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`. Note the **retrofit caveat**: `CredentialRevocationService` already exists from US3, so T202's additions must fail on **assertion**, not compile error — a pass against the existing implementation means the new cases are not exercising the new behaviour and must be strengthened. `OAuthScopeEnforcer`/`CredentialFieldSetGuard` are new, so their red is a compile error. Paste the transcript and commit the baseline. Non-parallel
 
 ### Implementation for User Story 8
 
-- [ ] T144 [US8] Implement `Application/Integrations/OAuthScopeEnforcer.cs` and `CredentialFieldSetGuard.cs`; wire the enforcer into T109's inbound authentication step so an insufficient scope maps to `401 E-1401`; confirm the standalone `POST /integrations/{id}/credentials/revoke` path works without a regeneration and emits `credential.revoked`
-- [ ] T145 [US8] API tests in `…/Endpoints/CredentialLifecycleEndpointTests.cs` 🐳 (revoke without regenerating → 200 then `401 E-1401` on a live call; generate while active → old key immediately unusable, verified by a live call; an OAuth token missing the target scope → `401 E-1401`) **and** the additional `[TestMethod]` blocks in `tests/Nabadat.E2ETests/IntegrationHub/IntegrationWizardTests.cs` 🎭 — `Wizard_revoke_dialog_names_masked_key_and_consequence`, `Wizard_generating_new_key_while_one_active_shows_no_extra_confirmation_for_old_key`, `Wizard_auth_forms_never_render_expiry_sandbox_or_ip_allowlist_fields`, `Wizard_oauth_form_has_no_grant_type_or_token_lifetime_fields`
+- [ ] T206 [P] [US8] Implement `OAuthScopeEnforcer` in `src/Nabadat.IntegrationHub/Application/Integrations/OAuthScopeEnforcer.cs` — the scenario→required-scope map (BR-26); wire it into `RequestValidationPipeline`'s **authentication** step so a scope failure surfaces as `401 E-1401`, not a distinct code
+- [ ] T207 [P] [US8] Implement `CredentialFieldSetGuard` in `src/Nabadat.IntegrationHub/Application/Integrations/CredentialFieldSetGuard.cs` — a static/config-level assertion over the console's credential field sets (`[PO-G13]`)
+- [ ] T208 [US8] Extend `CredentialRevocationService` in `src/Nabadat.IntegrationHub/Application/Integrations/CredentialRevocationService.cs` with the standalone revoke path; confirm the service surface exposes **no** un-revoke method and the controller exposes no such route
+- [ ] T209 [US8] Add the revoke/regenerate controls to `frontend/src/features/integration-hub/components/WizardStepAuth.tsx` for an existing integration, plus Dialog **D-3** — the confirmation names the **masked** key and states the consequence; the confirm is `variant="destructive"`, Cancel `variant="outline"`. Regenerating while a key is active shows **no extra confirmation** for the old key (BR-16)
 
-> **Scenario test**: spec.md declares `scenario-test: not-needed` for US8 — US3's `IntegrationOnboardingScenarioTests` already walks generate → revoke → repeat-call-rejected.
+### Integration & API Tests for User Story 8 🐳
 
-**Build gate**: unit + integration green · `npm run build` green · `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~IntegrationWizardTests"` green.
+- [ ] T210 [P] [US8] API tests in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Integrations/CredentialLifecycleEndpointTests.cs` — `POST …/{id}/credentials/revoke` without regenerating → 200 and a subsequent call with that key → `401 E-1401`; `POST …/credentials` while one is active → 200 with the old key **immediately** unusable, verified by a live call; a live call with an OAuth token whose scopes exclude the target scenario's scope → `401 E-1401`
+
+> `scenario-test: not-needed` per spec.md US8 — US3's `IntegrationOnboardingScenarioTests` already
+> exercises generate → revoke → repeat-call-rejected; this story adds no new cross-endpoint sequence.
+
+### E2E (Browser) Tests for User Story 8 🎭
+
+- [ ] T211 [P] [US8] Additional `[TestMethod]` blocks in `tests/Nabadat.E2ETests/IntegrationHub/IntegrationWizardTests.cs` (**same file as US3**) — `Wizard_revoke_dialog_names_masked_key_and_consequence` (D-3), `Wizard_generating_new_key_while_one_active_shows_no_extra_confirmation_for_old_key` (BR-16), `Wizard_auth_forms_never_render_expiry_sandbox_or_ip_allowlist_fields` (`[PO-G13]`), `Wizard_oauth_form_has_no_grant_type_or_token_lifetime_fields` (BR-17); update `COVERAGE.md`
+
+**Build gate (MANDATORY)**: unit + integration green; `npm run build` green; `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~IntegrationWizardTests"` green.
 
 **Checkpoint**: US1–US8 all work independently.
 
 ### Click-through Parity for User Story 8 🎨
 
-> Owner: the frontend developer, run manually. Same two preconditions as T042P.
+> Owner: the frontend developer, run manually. Preconditions: the SCR-02 Step-2 credential surface built
+> click-through-blind; click-through served + dev stack signed in.
 
-- [ ] T145P [US8] Run `/clickthrough-parity 006-integration-hub phase 10` over SCR-02 Step 2 in edit mode (revoke/regenerate) and triage the report. Record the result in `route-map.md`
+- [ ] T212P [US8] Run `/clickthrough-parity 006-integration-hub phase 10` over the SCR-02 Step-2 credential surface (revoke/regenerate controls and Dialog D-3) and triage the report. Apply accepted defects with `--fix`; escalate every **Needs discussion** item to the design owner — and note that the **absence** of expiry/sandbox/IP-allow-list/grant-type/token-lifetime fields is a ratified removal: if the click-through still shows any of them, that is a Needs-discussion item, **never** a `--fix` that re-adds the field. Record the result in `.claude/skills/clickthrough-parity/route-map.md`
 
 ---
 
 ## Phase 11: User Story 9 — Cross-Persona Read-Only Visibility and Permission Enforcement (Priority: P2)
 
-**Goal**: Each persona manages its own screens and gets **read-only** visibility on the other's —
-except **Request Logs, which are P-07-exclusive with no P-01 grant at all** (BR-24 as corrected in
-SRS v1.2). Every sensitive action is permission-controlled and audited, enforced server-side
-regardless of what the client renders.
+**Goal**: Each persona has full manage access to their own screens with cross-persona **read-only**
+visibility: P-01 may view (never edit) Integrations; P-07 may view (never edit) Service Channels,
+Parameters, and Mappings. **Request Logs are P-07-exclusive — P-01 has no log access of any kind**
+(BR-24 as corrected in SRS v1.2). Every sensitive action is permission-controlled and audited, enforced
+server-side regardless of what the client renders.
 
-**Independent Test**: As P-01, `/integration-hub/integrations` renders read-only (no New/Edit/Revoke)
-and `/integration-hub/logs` renders the **access-denied state**; then hit `POST /integrations` and
-`GET /request-logs` directly and confirm the server returns 403 for both.
+**Independent Test**: As a P-01 session, `/integration-hub/integrations` renders read-only (no New/Edit/
+Revoke controls) → `/integration-hub/logs` renders the **access-denied state** → then hit `POST
+/integrations` and `GET /request-logs` directly and verify the server independently returns 403 for both.
 
-### Unit Tests for User Story 9 (write FIRST, must FAIL) ⚠️
+### Unit Tests for User Story 9 (REQUIRED — write FIRST, must FAIL) ⚠️
 
-- [ ] T146 [P] [US9] Unit tests for `PermissionKeyResolver`, `CrossPersonaViewGuard`, and `AuditEventEmitter` in `tests/Nabadat.IntegrationHub.UnitTests/Permissions/` — `Resolve(P-01, "integration.manage")` → `Denied`; `Resolve(P-01, "integration.view")` → `Allowed`; `Resolve(P-07, "channel.manage")` → `Denied`; `Resolve(P-07, "log.view")` → `Allowed`; **`Resolve(P-01, "log.view")` → `Denied`** (no cross-persona view grant on logs); `Emit("credential.revoked", before={status:Active}, after={status:Revoked})` → one event with actor, tenant, timestamp, entity, before/after; `Emit("channel.id_changed", …)` likewise
+- [ ] T213 [P] [US9] Unit tests for `PermissionKeyResolver` in `tests/Nabadat.IntegrationHub.UnitTests/Permissions/PermissionKeyResolverTests.cs` — `Resolve(P-01, "integration.manage")` → `Denied`; `Resolve(P-01, "integration.view")` → `Allowed`; `Resolve(P-07, "channel.manage")` → `Denied`; `Resolve(P-07, "log.view")` → `Allowed`; **`Resolve(P-01, "log.view")` → `Denied`** (logs are P-07-exclusive, unlike channels/parameters/mappings which P-07 gets read-only); covers the full persona × action matrix over `m13.integration.view/manage`, `m13.credential.manage`, `m13.log.view`, `m13.channel.view/manage`, `m13.parameter.view/manage`, `m13.mapping.manage/replace`
+- [ ] T214 [P] [US9] Unit tests for `CrossPersonaViewGuard` in `tests/Nabadat.IntegrationHub.UnitTests/Permissions/CrossPersonaViewGuardTests.cs` — BR-24: P-01 gets `*.view`-only on P-07's screens and vice versa, with Request Logs excluded from the reciprocal grant
+- [ ] T215 [P] [US9] Unit tests for `AuditEventEmitter` in `tests/Nabadat.IntegrationHub.UnitTests/Permissions/AuditEventEmitterTests.cs` — `Emit("credential.revoked", actor=U1, before={status:Active}, after={status:Revoked})` → exactly one event carrying actor, tenant, timestamp, entity, and before/after summary; `Emit("channel.id_changed", before={id:"OLD"}, after={id:"NEW"})` → one event; one case per **all 12 audited action families** in the Permissions Matrix
 
 ### Red Checkpoint for User Story 9 🔴
 
-- [ ] T146R [US9] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`, verify red (no `Application/Permissions/` types), paste the transcript, commit. Non-parallel
+- [ ] T216R [US9] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`. Valid red: compile error (`Application/Permissions/` absent) or assertion failure once stubbed. **`AuditEventEmitter` is a partial retrofit** — events are already emitted piecemeal from US1–US8's `Application/Events/`; if T215 passes on first run the cases are not exercising the unified emitter and must be strengthened. Paste the transcript and commit the baseline. Non-parallel
 
 ### Implementation for User Story 9
 
-- [ ] T147 [US9] Frontend: FR-GBL-05 read-only rendering across all eight screens — every action the current persona lacks is hidden or disabled, driven by `hooks/useIntegrationHubAccess.ts`. Read-only personas get the `<Eye>` + `view-` testid row action, never a disabled pencil (CLAUDE.md row-actions rule), so E2E can prove the permission split
-- [ ] T148 [US9] Frontend: FR-GBL-02 access-denied state on direct-route access without the view permission — `components/AccessDenied.tsx` rendered for every route the persona cannot view, including `/integration-hub/logs` for P-01 (never a partial or broken render)
-- [ ] T149 [US9] Implement `Application/Permissions/PermissionKeyResolver.cs` — the nine `m13.*` keys from the Permissions Matrix (`integration.view/manage`, `credential.manage`, `log.view`, `channel.view/manage`, `parameter.view/manage`, `mapping.manage/replace`) — and register them with M-10 (CMC-06)
-- [ ] T150 [US9] Add authorization filters to every M-13 write endpoint so a persona lacking `*.manage` gets **403 regardless of client rendering**, and audit the denied attempt (SC-010)
-- [ ] T151 [US9] Implement `Application/Permissions/CrossPersonaViewGuard.cs` (BR-24) and apply it to the read paths — P-01 view-only on Integrations; P-07 view-only on Channels/Parameters/Mappings; **Request Logs P-07-exclusive**
-- [ ] T152 [US9] Implement `Application/Events/AuditEventEmitter.cs` and emit across all **12 audited action families** in the Permissions Matrix — integration created/updated · activated/deactivated · credential generated · revoked · channel created/updated · channel ID changed · channel activated/deactivated · parameter created/updated · parameter enabled/disabled · mapping added/edited/deleted · mapping import · mapping replace-all (SC-011)
-- [ ] T153 [US9] Frontend: audit the FR-GBL-03 unsaved-changes guard across **SCR-02, SCR-04, and SCR-06** so all three use one consistent derived-digest shape — closes TODO-M13-006. If T085's guard already lands it, this task is a consistency pass, not a rebuild
-- [ ] T154 [US9] API tests in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/PermissionsEndpointTests.cs` 🐳 — `POST /integrations` as P-01 → 403 (audited); `POST /service-channels` as P-07 → 403; `GET /integrations` as P-01 → 200; `GET /service-channels` as P-07 → 200; `GET /request-logs` as P-01 → 403; and every sensitive action performed by its authorized persona emits exactly one matching audit event (12 families)
+- [ ] T217 [P] [US9] Implement `PermissionKeyResolver` in `src/Nabadat.IntegrationHub/Application/Permissions/PermissionKeyResolver.cs` — the full M-13 action→permission-key map per the Permissions Matrix
+- [ ] T218 [P] [US9] Implement `CrossPersonaViewGuard` in `src/Nabadat.IntegrationHub/Application/Permissions/CrossPersonaViewGuard.cs` (BR-24)
+- [ ] T219 [US9] Consolidate audit emission into `AuditEventEmitter` in `src/Nabadat.IntegrationHub/Application/Events/AuditEventEmitter.cs` and route US1–US8's event writes through it, so all 12 action families emit one consistent shape (BR-21)
+- [ ] T220 [US9] Apply the permission attributes/policies to **every** M-13 controller action in `src/Nabadat.IntegrationHub/Api/Controllers/` — write endpoints return **403 for the wrong persona and audit the attempt**, enforced server-side independently of any client rendering (defense in depth; never rely on hidden UI controls)
+- [ ] T221 [US9] Gate the frontend on the same permission keys — hide or disable P-07-only actions in a P-01 session and vice versa (FR-GBL-05), and render the standard **access-denied state** on a direct route hit without the view grant (FR-GBL-02), across all eight screens in `frontend/src/features/integration-hub/pages/`
+- [ ] T222 [US9] Restrict the sidebar entries per persona in `frontend/src/components/app-sidebar.tsx` — `ROLE_NAV_KEYS` must not surface **Request Logs** to P-01 at all (BR-24); route-level visibility is governed there, not by the route
+
+### Integration & API Tests for User Story 9 🐳
+
+- [ ] T223 [P] [US9] Permission API tests in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Permissions/CrossPersonaPermissionEndpointTests.cs` — `POST /integrations` as P-01 → 403 (audited); `POST /service-channels` as P-07 → 403 (audited); `GET /integrations` as P-01 → 200; `GET /service-channels` as P-07 → 200; **`GET /request-logs` as P-01 → 403**
+- [ ] T224 [P] [US9] Audit-coverage test in `tests/Nabadat.IntegrationHub.IntegrationTests/Services/Permissions/AuditEventCoverageTests.cs` — each of the 12 Permissions-Matrix sensitive actions, performed successfully by its authorised persona, produces **exactly one** matching audit event with actor/tenant/timestamp/entity/before-after
+
+> `scenario-test: not-needed` per spec.md US9 — permission checks are single-request assertions.
 
 ### E2E (Browser) Tests for User Story 9 🎭
 
-- [ ] T155 [US9] E2E tests in `tests/Nabadat.E2ETests/IntegrationHub/CrossPersonaPermissionsTests.cs` — `Integrations_cx_manager_sees_read_only_view_with_no_manage_controls`, `ServiceChannels_it_admin_sees_read_only_view_with_no_manage_controls`, `RequestLogs_direct_route_access_without_permission_shows_access_denied`, `Mappings_direct_route_access_without_permission_shows_access_denied`. Update `COVERAGE.md`
+- [ ] T225 [P] [US9] E2E tests in `tests/Nabadat.E2ETests/IntegrationHub/CrossPersonaPermissionsTests.cs` — `Integrations_cx_manager_sees_read_only_view_with_no_manage_controls` (FR-GBL-05), `ServiceChannels_it_admin_sees_read_only_view_with_no_manage_controls` (FR-GBL-05), `RequestLogs_direct_route_access_without_permission_shows_access_denied` (FR-GBL-02/05), `Mappings_direct_route_access_without_permission_shows_access_denied` (FR-GBL-02/05); use `SignInAsync` with the two personas, and note read-only rows use the `view-*` testid prefix rather than a disabled `edit-*`; update `COVERAGE.md`
 
-> **Scenario test**: spec.md declares `scenario-test: not-needed` for US9.
-
-**Build gate**: unit + integration green · `npm run build` green · `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~CrossPersonaPermissionsTests"` green.
+**Build gate (MANDATORY)**: unit + integration green; `npm run build` green; `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~CrossPersonaPermissionsTests"` green.
 
 **Checkpoint**: US1–US9 all work independently.
 
 ### Click-through Parity for User Story 9 🎨
 
-> Owner: the frontend developer, run manually. Same two preconditions as T042P.
+> Owner: the frontend developer, run manually. Preconditions: the read-only variants built
+> click-through-blind; click-through served + **both** personas available in the dev stack.
 
-- [ ] T155P [US9] Run `/clickthrough-parity 006-integration-hub phase 11` over all eight routes **in their read-only persona rendering** and triage the report. Record the result in `route-map.md`
+- [ ] T226P [US9] Run `/clickthrough-parity 006-integration-hub phase 11` over the cross-persona read-only renderings of all eight screens and the access-denied states, and triage the report. Apply accepted defects with `--fix`; escalate every **Needs discussion** item to the design owner — in particular, if the click-through shows Request Logs to a P-01 persona that is a **business divergence** (BR-24 as corrected in SRS v1.2 makes logs P-07-exclusive), so it must be escalated, never `--fix`ed toward the click-through. Record the result in `.claude/skills/clickthrough-parity/route-map.md`
 
 ---
 
 ## Phase 12: User Story 10 — Activate and Deactivate Integrations and Service Channels (Priority: P3)
 
-**Goal**: The toggle UX and reactivation path for both entity types, with no delete transition
-anywhere.
+**Goal**: Either persona toggles their own entities between Active and Inactive without deleting them
+(deletion never exists). Deactivating an integration suspends its endpoint; deactivating a channel
+cascades `E-1004` rejections to every integration serving it and hides it from new-integration selection.
 
 **Independent Test**: Deactivate an Active integration → its SCR-01 row shows the neutral "Inactive"
-badge and "suspended" sub-line and a live call to its endpoint now fails → reactivate → the badge
-reverts and calls succeed again.
+badge and "suspended" sub-line and a live call to its endpoint fails → reactivate → the badge reverts
+and calls succeed again.
 
-### Unit Tests for User Story 10 (write FIRST, must FAIL) ⚠️
+### Unit Tests for User Story 10 (REQUIRED — write FIRST, must FAIL) ⚠️
 
-- [ ] T156 [P] [US10] Unit tests for `IntegrationStatusToggle` in `tests/Nabadat.IntegrationHub.UnitTests/Integrations/IntegrationStatusToggleTests.cs` — Active ⇄ Inactive audited (`integration.deactivated` / `integration.activated`); `Attempt(Delete, integration)` → no such state transition exists
-- [ ] T157 [P] [US10] Unit tests for `ServiceChannelStatusToggle` in `tests/Nabadat.IntegrationHub.UnitTests/Channels/ServiceChannelStatusToggleTests.cs` — Active ⇄ Inactive audited; on deactivate the channel is excluded from `GetActiveChannelsForSelector()`
+- [ ] T227 [P] [US10] Unit tests for `IntegrationStatusToggle` in `tests/Nabadat.IntegrationHub.UnitTests/Integrations/IntegrationStatusToggleTests.cs` — `Toggle(integration, Active→Inactive)` → `200` + `integration.deactivated` audit; `Toggle(Inactive→Active)` → `200` + `integration.activated`; `Attempt(Delete, integration)` → **no such state transition or endpoint exists**
+- [ ] T228 [P] [US10] Unit tests for `ServiceChannelStatusToggle` in `tests/Nabadat.IntegrationHub.UnitTests/Channels/ServiceChannelStatusToggleTests.cs` — `Toggle(channel, Active→Inactive)` → audited, and the channel is **excluded from `GetActiveChannelsForSelector()`**'s result set (SCR-02's selector query)
 
 ### Red Checkpoint for User Story 10 🔴
 
-- [ ] T158 [US10] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`, verify red, paste the transcript, commit. Non-parallel
+- [ ] T229R [US10] Run `dotnet test tests/Nabadat.IntegrationHub.UnitTests`. Valid red: compile error (the toggle types absent) or assertion failure once stubbed. Paste the transcript and commit the red baseline before implementation. Non-parallel
 
 ### Implementation for User Story 10
 
-- [ ] T159 [US10] Implement `Application/Integrations/IntegrationStatusToggle.cs` and `PATCH /api/v1/integration-hub/integrations/{id}` `{ active }` — an inactive integration's endpoint rejects calls with `401 E-1401` (credentials suspended, Status Lifecycle)
-- [ ] T160 [US10] Implement `Application/Channels/ServiceChannelStatusToggle.cs` and the `GET /service-channels?active=true` selector query used by SCR-02, so a deactivated channel disappears from new-integration selection while existing integrations keep the now-rejecting reference (BR-07)
-- [ ] T161 [US10] Frontend: the SCR-01 row-level status toggle with the neutral "Inactive" badge and "suspended" sub-line, and **no delete control anywhere** (Status Lifecycle)
-- [ ] T162 [US10] Frontend: the SCR-04 Active toggle wired to T160, plus the SCR-02 edge-case warning shown when an existing integration references a now-inactive channel
-- [ ] T163 [US10] API tests in `…/Endpoints/StatusToggleEndpointTests.cs` 🐳 — `PATCH /integrations/{id} {active:false}` → 200 then a live call rejected; `{active:true}` → 200 then calls succeed; `GET /service-channels?active=true` excludes a just-deactivated channel
+- [ ] T230 [P] [US10] Implement `IntegrationStatusToggle` in `src/Nabadat.IntegrationHub/Application/Integrations/IntegrationStatusToggle.cs` — audited; no delete transition exists
+- [ ] T231 [P] [US10] Implement `ServiceChannelStatusToggle` in `src/Nabadat.IntegrationHub/Application/Channels/ServiceChannelStatusToggle.cs` — audited; on deactivate, excluded from the active-channels selector query
+- [ ] T232 [US10] Add `PATCH /api/v1/integration-hub/integrations/{id}` `{active}` to `IntegrationsController` and the `?active=true` selector filter to `ServiceChannelsController`; a call to an inactive integration's endpoint is rejected `401 E-1401` (credentials suspended while inactive, Status Lifecycle) and a call to an inactive channel's endpoint is rejected `409 E-1004` (depends on T230, T231)
+- [ ] T233 [US10] Add the SCR-01 row-level status toggle to `frontend/src/features/integration-hub/pages/AllIntegrationsPage.tsx` — the neutral "Inactive" badge with the "suspended" sub-line, and **no delete control on any row, ever** (Status Lifecycle)
+- [ ] T234 [US10] Confirm the SCR-04 **Active** toggle in `frontend/src/features/integration-hub/pages/ServiceChannelFormPage.tsx` drives the same endpoint, and that a deactivated channel disappears from SCR-02's channel select for **new** integrations while an existing integration serving it keeps the now-rejecting reference visible **with a warning** (SCR-02 edge case)
+
+### Integration & API Tests for User Story 10 🐳
+
+- [ ] T235 [P] [US10] API tests in `tests/Nabadat.IntegrationHub.IntegrationTests/Endpoints/Integrations/IntegrationStatusEndpointTests.cs` — `PATCH …/{id} {active:false}` → 200 and a subsequent live call → `401 E-1401`; `{active:true}` → 200 and calls succeed again; `GET /service-channels?active=true` excludes a just-deactivated channel
+
+> `scenario-test: not-needed` per spec.md US10 — covered by the round-trip integration tests above and
+> by US1's and US4's scenario tests for the channel-deactivation cascade.
 
 ### E2E (Browser) Tests for User Story 10 🎭
 
-- [ ] T164 [US10] E2E `[TestMethod]` blocks added to `tests/Nabadat.E2ETests/IntegrationHub/IntegrationMonitoringTests.cs` — `Integrations_deactivate_reactivate_round_trip_updates_badge_and_endpoint`, `Integrations_row_never_shows_a_delete_action`
-- [ ] T165 [US10] E2E `[TestMethod]` block added to `tests/Nabadat.E2ETests/IntegrationHub/ServiceChannelTests.cs` — `ServiceChannels_deactivated_channel_disappears_from_new_integration_selector`. Update `COVERAGE.md`
+- [ ] T236 [P] [US10] Additional `[TestMethod]` blocks in `tests/Nabadat.E2ETests/IntegrationHub/IntegrationMonitoringTests.cs` (**same file as US5**) — `Integrations_deactivate_reactivate_round_trip_updates_badge_and_endpoint`, `Integrations_row_never_shows_a_delete_action`; and in `ServiceChannelTests.cs` (**same file as US1**) — `ServiceChannels_deactivated_channel_disappears_from_new_integration_selector`; update `COVERAGE.md`
 
-> **Scenario test**: spec.md declares `scenario-test: not-needed` for US10.
+**Build gate (MANDATORY)**: unit + integration green; `npm run build` green; `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~IntegrationMonitoringTests"` and `--filter "FullyQualifiedName~ServiceChannelTests"` green.
 
-**Build gate**: full-solution `dotnet test Nabadat.sln` green · `npm run build` green · `dotnet test tests/Nabadat.E2ETests` green.
-
-**Checkpoint**: all ten user stories are independently functional.
+**Checkpoint**: all ten user stories are complete and independently functional.
 
 ### Click-through Parity for User Story 10 🎨
 
-> Owner: the frontend developer, run manually. Same two preconditions as T042P.
+> Owner: the frontend developer, run manually. Preconditions: the toggle surfaces built
+> click-through-blind; click-through served + dev stack signed in.
 
-- [ ] T165P [US10] Run `/clickthrough-parity 006-integration-hub phase 12` over the SCR-01 row toggle and the SCR-04 Active toggle and triage the report. Record the result in `route-map.md`
+- [ ] T237P [US10] Run `/clickthrough-parity 006-integration-hub phase 12` over the SCR-01 row status toggle and the SCR-04 Active toggle and triage the report. Apply accepted defects with `--fix`; escalate every **Needs discussion** item to the design owner. Record the result in `.claude/skills/clickthrough-parity/route-map.md`
 
 ---
 
 ## Phase 13: Polish & Cross-Cutting Concerns
 
-**Purpose**: NFR and Success-Criteria verification, deferred-item closure, documentation, and the
-whole-module release gate.
+**Purpose**: Verification passes that span every story, plus the release gate.
 
-### NFR verification
+### Capacity, NFR, and performance verification
 
-- [ ] T166 [P] NFR-2/SC-013 — performance regression test on a seeded tenant proving 95% of inbound API requests complete within 500ms excluding downstream systems
-- [ ] T167 NFR-4 — bind the per-integration rate limit to configuration so Nabadat Operations can change it **without a code deployment**; add a test proving an in-flight request already past the check is unaffected by a concurrent limit change
-- [ ] T168 [P] NFR-5 — integration test proving plain HTTP is refused and TLS 1.2+ is enforced on both the API and the console
-- [ ] T169 NFR-6/SC-008 — repo-wide audit that no plaintext credential secret appears in any log sink, API response schema, or export after its show-once dialog closes
-- [ ] T170 NFR-8 — implement 90-day request-log retention by **DETACHING** old monthly partitions (never row-level `DELETE`, per DB-04) and assert it in an integration test. Closes half of TODO-M13-004
-- [ ] T171 NFR-8 — implement the monthly partition roll-forward job for `integration_request_logs`, including the documented Postgres caveat that rows already landed in `DEFAULT` block attaching a real partition for that month. Closes the other half of TODO-M13-004
-- [ ] T172 [P] NFR-9 — tenant-isolation integration test across all eight owned tables, proving no cross-tenant read or write path exists
-- [ ] T173 [P] NFR-16/SC-015 — guard tests for all five ceilings: 200 custom parameters, 100 channels, 200 integrations (VR-F13 console errors) and 5,000 mappings / 10,000 import rows (`MappingsPerParameterGuard`, `ImportRowCountGuard`)
-- [ ] T174 [P] NFR-17 — concurrency test proving last-write-wins with a full audit record for two concurrent edits of the same not-yet-locked channel ID, and for a replace-all racing an inline edit
-- [ ] T175 Add `ResetIntegrationHubStateAsync()` to `tests/Nabadat.IntegrationHub.IntegrationTests/Infrastructure/IntegrationHubApplicationFactory.cs` — truncates `channel_parameter_assignments`, `integration_request_logs`, `credentials`, `integrations`, `service_channels` while **leaving `parameters` intact**, and asserts the built-in count is still 23 afterwards. Call it from every endpoint test class's arrange step. Closes TODO-M13-003 (backend half)
-- [ ] T176 One-off prune of the shared `e2e` tenant's ~73 leftover service channels, and a review that every M-13 E2E file tears down what it seeds. Closes TODO-M13-003 (browser half)
+- [ ] T238 [P] Implement and test the per-tenant creation guardrails (VR-F13, NFR-16) — ≤ 200 custom parameters, ≤ 100 channels, ≤ 200 integrations — as a **console-side validation error** on each create action in `src/Nabadat.IntegrationHub/Application/{Parameters,Channels,Integrations}/`; **no inbound-API result code** is added, since these entities are created only through the console (SC-015)
+- [ ] T239 [P] Verify NFR-2 with a performance regression test in `tests/Nabadat.IntegrationHub.IntegrationTests/Services/PerformanceTests.cs` — 95% of inbound API requests complete within 500 ms excluding downstream systems, on a seeded tenant (SC-013)
+- [ ] T240 [P] Verify the 90-day request-log retention and DB-04 monthly partition rollover behaviour against `integration_request_logs` (NFR-8)
+- [ ] T241 Verify NFR-4 in `tests/Nabadat.IntegrationHub.IntegrationTests/Services/Requests/RateLimitReconfigurationTests.cs` — a per-integration rate-limit change applied by Nabadat Operations takes effect **with no code deployment** (config-driven, not compiled), and requests already past the rate-limit check are unaffected by a concurrent limit change (Edge Cases)
+- [ ] T242 Confirm NFR-17 last-write-wins concurrency in `tests/Nabadat.IntegrationHub.IntegrationTests/Services/ConcurrencyTests.cs` — the two named races (concurrent edits to a not-yet-locked channel ID; a replace-all triggered while another editor is mid-edit) resolve last-write-wins **with full audit records**, asserting the documented behaviour, **not** a locking mechanism
 
-### Success-criteria verification
+### Security and privacy audits
 
-- [ ] T177 [P] SC-003 — audit that 100% of pipeline failures reject atomically with the correct code and zero partial downstream side effects
-- [ ] T178 [P] SC-004 — verify idempotency correctness: any retry count of an identical `(tenant, channelId, transaction_id)` produces exactly one downstream dispatch/store
-- [ ] T179 [P] SC-005 — verify zero data loss for unmapped List values and unregistered key–value pairs across US4 and US6
-- [ ] T180 [P] SC-006 — verify retroactive mapping correctness with zero stale-label reads after an edit and after a replace-all
-- [ ] T181 SC-011 — audit-completeness sweep asserting all 12 audited action families emit actor, tenant, timestamp, entity, and before/after summary
-- [ ] T182 SC-016 — SCN-05 durability: assert M-13's `202` through to a confirmed downstream stored record. **Blocked on M-04** (coordination-log C-02) — until it ships, assert against `RecordedResponseIngestion` and document the boundary in `coordination-log.md` rather than claiming the criterion met
-- [ ] T183 SC-001 — time the golden path of US3 and confirm a new integration's endpoint is callable in under 5 minutes from opening the wizard
-- [ ] T184 SC-002 — on a seeded 20-integration tenant, confirm an unhealthy integration (error rate > 5%) is identifiable within 10 seconds of SCR-01 load
+- [ ] T243 [P] Repo-wide audit for SC-008 across `src/Nabadat.IntegrationHub/` — grep every log sink, `Api/Contracts/` response schema, and export path to prove **zero** occurrences of a plaintext credential secret after its show-once dialog closes; record the findings in `specs/006-integration-hub/coordination-log.md` (NFR-6)
+- [ ] T244 [P] Repo-wide audit for SC-009 across `src/Nabadat.IntegrationHub/Application/Monitoring/` and `Api/Contracts/` — prove every mobile/email/customer-name read path routes through `PiiMaskingFormatter`, i.e. **zero unmasked-access code paths** exist in Phase 1 for list, detail, and export; record the findings in `specs/006-integration-hub/coordination-log.md` (NFR-9/FR-S8-03)
+- [ ] T245 **Resolve the open GP-03 question raised in plan.md's Constitution Check**: does a right-to-erasure request need to redact historical `IntegrationRequestLog.parameters_received` rows carrying a given contact's PII? spec.md is silent and it was not raised in either clarification round. Take it to the PO; if it needs a spec change, run `/speckit-clarify` rather than resolving it in code
 
 ### Bilingual, theme, and accessibility passes
 
-- [ ] T185 [P] SCR-01 — verify LTR/RTL parity and light/dark rendering (NFR-10, SC-012)
-- [ ] T186 [P] SCR-02 — verify LTR/RTL parity and light/dark rendering across all three wizard steps and D-1/D-2/D-3
-- [ ] T187 [P] SCR-03 — verify LTR/RTL parity and light/dark rendering
-- [ ] T188 [P] SCR-04 — verify LTR/RTL parity and light/dark rendering, including the RTL Arabic name input
-- [ ] T189 [P] SCR-05 — verify LTR/RTL parity and light/dark rendering, including the tab strip and flag glyphs
-- [ ] T190 [P] SCR-06 — verify LTR/RTL parity and light/dark rendering of the drawer, Range card, and List panel
-- [ ] T191 [P] SCR-07 — verify LTR/RTL parity and light/dark rendering, including RTL Arabic display values in table cells and D-4/D-5/D-7
-- [ ] T192 [P] SCR-08 — verify LTR/RTL parity and light/dark rendering, including the expanded detail panel and masked values
-- [ ] T193 SC-012 — run the RTL logical-property scan over `frontend/src/features/integration-hub/`: zero `pl-*`/`pr-*`/`ml-*`/`mr-*`/`left-*`/`right-*`/`text-left`/`text-right`/`rounded-l-*`/`rounded-r-*`/`border-l-*`/`border-r-*`
-- [ ] T194 Run CLAUDE.md's theming self-review over the feature folder: `-\[#[0-9a-fA-F]{3,8}\]` **must return 0**; judgment-check every `style={{…#hex}}` hit (only the SCR-02 Step-3 code block's fixed dark surface is sanctioned)
-- [ ] T195 [P] SC-014 — automated axe scan of SCR-01/02/03/04 in both LTR and RTL; 0 WCAG 2.1 AA violations
-- [ ] T196 [P] SC-014 — automated axe scan of SCR-05/06/07/08 in both LTR and RTL; 0 WCAG 2.1 AA violations
-- [ ] T197 NFR-11 — keyboard operability pass: Esc closes the SCR-06 drawer and every dialog D-1…D-7, focus-visible rings on all interactive elements, `prefers-reduced-motion` respected
-- [ ] T198 NFR-12 — responsive pass across the eight screens: tiles collapse to two/one columns, the sidebar hides below tablet width, tables scroll horizontally inside their own container
+- [ ] T246 [P] SC-012 bilingual parity pass — render all eight screens in AR (RTL) and EN (LTR); run the CLAUDE.md self-review regex `-\[#[0-9a-fA-F]{3,8}\]` over `frontend/src/features/integration-hub/` and require **0 hits** (hex in a Tailwind class never re-themes for a tenant), plus a physical-direction-property scan (`pl-`, `pr-`, `ml-`, `mr-`, `text-left`, `text-right`, `rounded-l-`, `rounded-r-`, `border-l-`, `border-r-`) requiring 0 hits
+- [ ] T247 [P] Light + dark theme pass over all eight screens — verify no neutral SVG/track chrome is a hardcoded light-slate hex, that borders use the `border-border`/`border-input` tokens rather than low-alpha navy, and that every D-scale status badge pairs colour with an icon (NFR-10)
+- [ ] T248 [P] SC-014 accessibility pass — automated axe scan of all eight screens in **both** LTR and RTL requiring 0 WCAG 2.1 AA violations; verify keyboard-only operation of every dialog/drawer (Esc closes), visible focus rings, and `prefers-reduced-motion` support (NFR-11)
+- [ ] T249 [P] NFR-12 responsive pass over `frontend/src/features/integration-hub/pages/` — tiles collapse to two/one columns, the sidebar hides below tablet width, and every table scrolls horizontally inside its own `overflow-x-auto` container without the page body scrolling sideways
 
 ### Copy, contract, and catalogue audits
 
-- [ ] T199 NFR-13 — confirm every destructive action (D-3 revoke, D-5 replace-all, D-6 disable, D-7 delete mapping) sits behind an explicit confirmation naming the consequence
-- [ ] T200 FR-GBL-01 — verify server-side pagination beyond 50 rows on all five tables, with the specified default orders (integrations/channels/parameters by creation, logs newest-first, mappings by entry order) and no user-facing column sorting in Phase 1
-- [ ] T201 FR-GBL-02 — verify skeleton, empty (with guidance + primary CTA), error-with-retry, and access-denied states exist on all eight screens
-- [ ] T202 FR-GBL-04 — verify success toasts on create/save/import/revoke, error toasts on failed generation, and that all inline validation copy matches VR-F12's patterns ("‹Field› is required" / "‹Value› is already in use")
-- [ ] T203 Arabic copy review of the whole `integrationHub` i18n namespace — natively written فصحى, never translated from English; no `text-xs` on Arabic body paragraphs; `leading-relaxed` on Arabic prose
-- [ ] T204 Audit every screen's shipped copy against spec.md's per-screen `[UI]` blocks (SCR-01 tile sub-texts, SCR-03 footer note, SCR-04 helpers, SCR-05 footer note, SCR-06 flag descriptions, SCR-07 alert pattern, SCR-08 masking alert)
-- [ ] T205 Audit the inbound API's result-code message copy against FR-F0-03's exact normative patterns, including the `E-1401`-on-revocation and `E-1500` retry-idempotent strings
-- [ ] T206 Contract test proving the data-type list is closed — **Duration and Identifier appear nowhere**, including the SCR-06 type select (`[PO-G17]`), mirroring `CredentialFieldSetGuard`'s shape
-- [ ] T207 Verify the seeded built-in catalogue against FR-F0-10 — exactly 23 parameters with the specified `api_field`, data type, and BR-27 mapping-support state; all enabled by default (BR-23); type read-only for every one (`[PO-G27]`)
-- [ ] T208 Verify all nine `m13.*` permission keys are registered with M-10 and that the Permissions Matrix in spec.md matches what `PermissionKeyResolver` resolves
+- [ ] T250 [P] Normative-copy audit — every result-code message emitted by `ResultCodeMapper` matches spec.md's exact copy patterns verbatim (F0.3), and the D-1/D-2/D-3/D-4/D-5/D-6/D-7 dialog copy matches the ratified text, in **both** EN and AR
+- [ ] T251 [P] Arabic-copy review — confirm every AR string in `frontend/src/i18n/ar.json` for this module was written **natively in فصحى**, not translated from the English (CLAUDE.md Brand Voice), and that no AR body text sits at `text-xs`
+- [ ] T252 [P] Cross-module contract audit — re-verify the two **real** integrations still hold (M-10's `POST /api/v1/authorization/scope/parameters` and M-01's `ISurveyRenderService`) and that the three M-02/M-04 stub ports remain no-ops with no accidental production coupling (contracts/published-interfaces.md)
+- [ ] T253 [P] Confirm the 23 built-in parameters seeded in `IntegrationHub_Baseline.sql` match the SRS catalogue exactly — names, API field names, data types, and default usage flags — and that Searchable is absent (`[PO-G26]`)
 
 ### Documentation and closure
 
-- [ ] T209 [P] Document the console API and the five inbound scenario endpoints in `docs/` — request/response shapes, the result-code catalogue, auth mechanisms, and scopes
-- [ ] T210 [P] Update `specs/006-integration-hub/contracts/api-endpoints.md` to replace the illustrative inbound paths with the final shipped ones (the paths were always illustrative; the semantics were normative)
-- [ ] T211 [P] Update `specs/006-integration-hub/coordination-log.md` — close or restate C-01/C-02 (M-02/M-04) with the current stub state and the zero-code-change swap path
-- [ ] T212 [P] Update TODO-M13-005 with the concrete ask filed to the M-10 owner for the data-scope reverse lookup (`GetAssignmentsReferencingParameterAsync`), so BR-10's external two-thirds has an owner
-- [ ] T213 Backfill `specs/006-integration-hub/IMPLEMENTATION.md` for Phases 1–3 (T001–T042), which predate the file, and add sections for every phase completed after US2
-- [ ] T214 Run `specs/006-integration-hub/quickstart.md` end to end and fix any drift
-- [ ] T215 Full-solution gate: `dotnet test Nabadat.sln` → 0 failures (unit + integration + contract, Docker up)
-- [ ] T216 Frontend gate: `npm run build` from `frontend/` green, plus a bundle-size sanity check on the new feature folder
-- [ ] T217 Full browser gate: `dotnet test tests/Nabadat.E2ETests` green with the stack up and `E2E_BASE_URL` set; confirm every `COVERAGE.md` row for `IntegrationHub/` is ✅
-- [ ] T218 **Full-module click-through parity audit — run before the module is pushed.** `/clickthrough-parity 006-integration-hub` with a **bare feature and NO phase**. This is not a repeat of the per-story runs: only whole-module scope can see cross-page **placement** differences (the same control sitting on a different page than the design), because those need the module's full page map. Triage the report; `--fix` what the frontend lead accepts; escalate the Needs-discussion list. `record-audit.py` stamps the result, which is what unblocks `git push` to `main`/`master` (`.claude/hooks/parity-gate.py`)
+- [ ] T254 [P] Run `specs/006-integration-hub/quickstart.md` end to end against a fresh environment and correct any drift
+- [ ] T255 [P] Update `.claude/skills/clickthrough-parity/route-map.md` with all nine M-13 page-bearing routes and their per-story audit results
+- [ ] T256 Run `/speckit-analyze` for a final cross-artifact consistency check across spec.md, plan.md, and tasks.md
+
+### Release gate
+
+- [ ] T257 **Full-module click-through parity audit — run before the module is pushed.** `/clickthrough-parity 006-integration-hub` with a **bare feature and NO phase**. This is not a repeat of the per-story runs: only whole-module scope can see cross-page **placement** differences (the same control sitting on a different page than the design), because those need the module's full page map. Triage the report; `--fix` what the frontend lead accepts; escalate the Needs-discussion list. `record-audit.py` stamps the result, and that stamp is what unblocks `git push` to `main`/`master` via `.claude/hooks/parity-gate.py`
+- [ ] T258 Full-solution verification — `dotnet test Nabadat.sln` green (unit + integration + contract), `npm run build` green in `frontend/`, and `dotnet test tests/Nabadat.E2ETests --filter "FullyQualifiedName~IntegrationHub"` green with the stack up
 
 ---
 
@@ -697,106 +792,123 @@ whole-module release gate.
 
 ### Phase Dependencies
 
-- **Setup (Phase 1)** → no dependencies
-- **Foundational (Phase 2)** → depends on Setup; **BLOCKS every user story**
-- **User Stories (Phases 3–12)** → all depend on Foundational
-- **Polish (Phase 13)** → depends on every story being complete
+- **Setup (Phase 1)**: no dependencies — start immediately
+- **Foundational (Phase 2)**: depends on Setup — **BLOCKS every user story**
+- **User Stories (Phases 3–12)**: all depend on Foundational
+- **Polish (Phase 13)**: depends on every story you intend to ship
 
 ### User Story Dependencies
 
-The P1 set is a genuine chain, not an accident of ordering:
+Unusually for this template, M-13's P1 stories have **real ordering constraints** — the module is a
+pipeline, not a set of independent CRUD screens:
 
-- **US1 (P1)** — after Foundational. No story dependencies. **MVP.**
-- **US2 (P1)** — after Foundational. Independent of US1 (the 23 built-ins are seeded by T009), but US1's contract table renders the catalogue US2 governs.
-- **US3 (P1)** — needs **US1** (an active channel to attach to). Its unit tests are already written.
-- **US4 (P1)** — needs **US1 + US3** (a channel and a provisioned endpoint to call).
-- **US5 (P1)** — needs **US4** (request logs must exist to aggregate).
-- **US6 (P2)** — needs **US2** (mapping-enabled parameters) and, for the unmapped queue, **US4**.
-- **US7 (P2)** — needs **US6**.
-- **US8 (P2)** — needs **US3** (credentials are generated there); scope enforcement rides on **US4**'s auth step.
-- **US9 (P2)** — cross-cutting; needs every screen to exist to render read-only, so it lands after US1–US8.
-- **US10 (P3)** — needs **US1 + US3**; its consequences are already asserted in US1 and US4.
-
-Because both engineers are solo (research.md §1), the backend runs strictly sequentially. The
-frontend can lead where a story's endpoints already exist.
+- **US1 (P1, Service Channels)** — depends only on Foundational. **The true entry point**: nothing
+  else is testable without a channel.
+- **US2 (P1, Parameter Catalogue)** — depends only on Foundational; the 23 built-ins are seeded in
+  T020, so US1's contract editor works before US2 ships. Can run **parallel to US1**.
+- **US3 (P1, Integration Wizard)** — needs **US1** (an active channel to attach to) and reads US2's
+  catalogue for its Step-3 accepted-parameters preview.
+- **US4 (P1, Inbound Requests)** — needs **US1 + US3** (a channel and a provisioned endpoint) and
+  US2's parameter definitions for type validation.
+- **US5 (P1, Monitoring & Logs)** — needs **US4** to have written `integration_request_logs` rows;
+  its SCR-01 list portion is built in US3 (T100) and extended here (T153).
+- **US6 (P2, Mappings)** — needs US2 (mapping-enabled parameters) and US4 (to populate the unmapped
+  queue at ingestion).
+- **US7 (P2, Excel bulk)** — extends **US6**; same page, same controller.
+- **US8 (P2, Credential lifecycle)** — extends **US3**; same wizard step, same controller.
+- **US9 (P2, Permissions)** — cross-cutting; it hardens every controller and page from US1–US8, so it
+  lands **after** them, though its unit tests can be written earlier.
+- **US10 (P3, Activate/Deactivate)** — needs US1 + US3; its consequences are already asserted
+  cross-story in US1 (AC 5) and US4 (AC-F0-05), so only the toggle UX and reactivation path remain.
 
 ### Within Each User Story
 
-1. Unit tests written and **failing** (Red Checkpoint, committed) before any implementation
-2. Domain/DTOs → rules → services → controllers
-3. Backend before the frontend screens that consume it
-4. Integration/scenario + E2E at the **per-story checkpoint**, never between implementation tasks
-5. Click-through parity **after** the checkpoint is green, as its own assigned task — never before, never automatically
+- Unit tests are written and **must FAIL** (Red Checkpoint) before any implementation task is read
+- Integration/scenario + E2E tests run at the per-story checkpoint, never between implementation tasks
+- Click-through parity runs **after** that checkpoint is green, as its own assigned task — never
+  before, and never automatically
+- Entities → data-access store + port → business service → controller → frontend hook → pages
+- Story complete before moving to the next priority
 
 ### Parallel Opportunities
 
-- All `[P]` Setup tasks (T002, T003, T005)
-- All `[P]` Foundational tasks — T007/T008, T010, T015/T016/T017, T019, T022/T023, T025/T026/T027/T028
-- Every unit-test task within a story (different files) — e.g. T029–T033, T043–T048, T068–T073, T094–T101, T114–T119
-- Independent per-rule implementation tasks once the red baseline is committed — e.g. T051–T056, T103–T107
-- The Polish phase's per-screen and per-NFR passes (T166–T208 `[P]` items)
+- All Setup `[P]` tasks (T003–T006) run in parallel
+- Foundational `[P]` tasks split into three independent tracks: Domain (T007–T010), adapters
+  (T016–T018), and frontend shell (T021, T024)
+- **All unit-test tasks within a story are `[P]`** — different files, no shared state
+- **US1 and US2 can run fully in parallel** after Foundational — different `Application/` subdomains,
+  different pages, different test folders
+- **Team split (research.md §1)**: with one backend and one frontend engineer, the frontend tasks of
+  story N run in parallel with the backend tasks of story N+1 once story N's API contract is fixed.
+  Backend work itself is **strictly sequential** — there is no second backend engineer to split the
+  write path from the read path
 
 ---
 
-## Parallel Example: User Story 4 unit tests
+## Parallel Example: User Story 1
 
 ```bash
-# All eight US4 unit-test files are independent — write them together, then run one red checkpoint:
-Task: "Unit tests for RequestValidationPipeline in tests/Nabadat.IntegrationHub.UnitTests/Requests/RequestValidationPipelineTests.cs"
-Task: "Unit tests for ResultCodeMapper in tests/Nabadat.IntegrationHub.UnitTests/Requests/ResultCodeMapperTests.cs"
-Task: "Unit tests for ChannelContractRequiredFieldChecker in tests/…/Requests/ChannelContractRequiredFieldCheckerTests.cs"
-Task: "Unit tests for ParameterTypeValidator in tests/…/Requests/ParameterTypeValidatorTests.cs"
-Task: "Unit tests for UnregisteredParameterStore in tests/…/Requests/UnregisteredParameterStoreTests.cs"
-Task: "Unit tests for IdempotencyKeyResolver in tests/…/Requests/IdempotencyKeyResolverTests.cs"
-Task: "Unit tests for AllowedOriginsWhitelistStore in tests/…/Requests/AllowedOriginsWhitelistStoreTests.cs"
-Task: "Unit tests for SurveyLinkExpiryCalculator in tests/…/Requests/SurveyLinkExpiryCalculatorTests.cs"
+# All five unit-test tasks together (write FIRST, must fail):
+Task: "Unit tests for ChannelIdSanitizer in tests/Nabadat.IntegrationHub.UnitTests/Channels/ChannelIdSanitizerTests.cs"
+Task: "Unit tests for ChannelIdUniquenessValidator in .../Channels/ChannelIdUniquenessValidatorTests.cs"
+Task: "Unit tests for ChannelIdLockGuard in .../Channels/ChannelIdLockGuardTests.cs"
+Task: "Unit tests for ParameterContractDependencyRule in .../Channels/ParameterContractDependencyRuleTests.cs"
+Task: "Unit tests for ChannelNameValidator in .../Channels/ChannelNameValidatorTests.cs"
 
-# Then, non-parallel:
-dotnet test tests/Nabadat.IntegrationHub.UnitTests   # T102 — must be RED
+# --- Red Checkpoint T030R (non-parallel) — commit the red baseline ---
+
+# Then the five pure-logic implementations together:
+Task: "Implement ChannelIdSanitizer in src/Nabadat.IntegrationHub/Application/Channels/ChannelIdSanitizer.cs"
+Task: "Implement ChannelIdUniquenessValidator in .../Application/Channels/ChannelIdUniquenessValidator.cs"
+Task: "Implement ChannelIdLockGuard in .../Application/Channels/ChannelIdLockGuard.cs"
+Task: "Implement ParameterContractDependencyRule in .../Application/Channels/ParameterContractDependencyRule.cs"
+Task: "Implement ChannelNameValidator in .../Application/Channels/ChannelNameValidator.cs"
 ```
 
 ---
 
 ## Implementation Strategy
 
-### MVP (User Story 1 only)
+### MVP First (User Story 1 only)
 
-1. Phase 1 Setup → 2. Phase 2 Foundational → 3. Phase 3 US1 → **stop and validate** → demo.
-A CX Manager can define a service channel and its parameter contract. ✅ **Already delivered.**
+1. Complete Phase 1: Setup
+2. Complete Phase 2: Foundational (**CRITICAL** — blocks everything)
+3. Complete Phase 3: User Story 1
+4. **STOP and VALIDATE**: create a service channel with a parameter contract, independently
+5. Demo if ready
 
-### The real "module is alive" milestone
+### Incremental Delivery
 
-US1 + US2 + US3 + US4 together. Nothing in this module demonstrably works until a **real inbound
-request succeeds** against a configured channel and a provisioned endpoint — that is the point of
-US4's placement at P1 rather than later. US5 then makes that success observable.
+The honest increment boundary for this module is **US1 + US2 + US3 + US4** — a channel, a catalogue,
+a provisioned endpoint, and a request that actually flows. Everything before US4 is configuration
+with nothing calling it.
 
-### Incremental delivery
+1. Setup + Foundational → foundation ready
+2. US1 (+ US2 in parallel) → configuration surface demoable
+3. US3 → an endpoint is provisioned
+4. US4 → **a real request succeeds end to end — the first genuinely demoable increment**
+5. US5 → the loop is observable; **all P1 work is done**
+6. US6 → US7 → US8 → US9 (P2) → US10 (P3), each independently testable
+7. Phase 13 → verification passes and the release gate
 
-1. Setup + Foundational → foundation ready ✅
-2. US1 → demo ✅
-3. US2 → demo ✅
-4. **US3 → US4 → US5** → the module delivers its core value (next up; US3's red baseline is already written)
-5. US6 → US7 → business-friendly labelling and bulk operations
-6. US8 → US9 → operational credential hygiene and the multi-role guardrail
-7. US10 → the lifecycle toggles
-8. Polish → NFR/SC verification, then T218 unblocks the push to `main`
+### Parallel Team Strategy (2 resources — AbuKr backend, Marwan frontend)
 
-### Solo-per-lane strategy
-
-With one backend and one frontend engineer (research.md §1), the practical cadence is: AbuKr lands a
-story's backend through its integration tests; Marwan follows one story behind on the screens, then
-runs that story's E2E and its click-through parity task. The parity report is triaged by the
-frontend lead, not applied blindly — every **Needs discussion** item is a business decision.
+1. Both complete Setup + Foundational together (T021–T024 are Marwan's; T001–T020 are AbuKr's)
+2. Thereafter, pipeline by one story: AbuKr runs story N's backend (unit tests → red → services →
+   controller) while Marwan builds story N−1's pages against the now-fixed contract
+3. Backend stories stay strictly sequential; the parity audits are Marwan's to run and triage
 
 ---
 
 ## Notes
 
-- `[P]` = different files, no dependencies on incomplete tasks
-- `[Story]` maps each task to its spec.md user story for traceability
-- **Build the pages click-through-blind.** Never open or copy from `clickthrough-reference/` while implementing — a ported page makes its parity run report "identical" regardless of real drift, and is recorded `NOT AUDITED`, never "0 defects"
-- Verify unit tests fail for the right reason before implementing; commit the red baseline
-- Commit after each task or logical group; stop at any checkpoint to validate the story independently
-- Backend module structure is fixed by constitution AMENDMENT-009 / Article 1A — a new top-level folder kind needs an amendment, not a task
-- Persistence is EF Core only (DB-08): no raw SQL, no `IUnitOfWork`, no EF migrations — tables land in `IntegrationHub_Baseline.sql`
-- Time is injected (`TimeProvider`); `DateTime.UtcNow` must not appear in tested production code
+- `[P]` = different files, no dependencies
+- `[Story]` maps every task to its user story for traceability
+- **US4 is the only story with no E2E and no click-through-parity subsection** — it declares
+  `e2e-tests: skipped` because Feature 0 is headless with no console screen
+- **No story in this feature declares `unit-tests: skipped`** — all ten are backend-bearing, so all
+  ten carry a Unit Tests subsection and a Red Checkpoint
+- Verify tests fail before implementing; commit the red baseline via `/speckit-git-commit`
+- Commit after each task or logical group; stop at any checkpoint to validate a story independently
+- **Build every page click-through-blind.** A page ported or copied from the click-through makes its
+  parity run VOID — reported `NOT AUDITED`, never "0 defects"
